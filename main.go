@@ -1,16 +1,17 @@
 package main
 
 import (
-	"os"
-
-	"github.com/previousnext/gopher/cmd"
+	"github.com/previousnext/login/cmd"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"os"
 )
 
 func main() {
-	app := kingpin.New("Gopher", "Bootstrap a go utility")
 
-	cmd.Version(app)
+	app := kingpin.New("login", "Example Cognito CLI login.")
+
+	cmd.Login(app)
+	cmd.ForgotPassword(app)
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 }

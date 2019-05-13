@@ -2,7 +2,7 @@
 
 export CGO_ENABLED=0
 
-PROJECT=github.com/previousnext/gopher
+PROJECT=github.com/previousnext/login
 VERSION=$(shell git describe --tags --always)
 COMMIT=$(shell git rev-list -1 HEAD)
 
@@ -10,8 +10,8 @@ COMMIT=$(shell git rev-list -1 HEAD)
 build:
 	gox -os='linux darwin' \
 	    -arch='amd64' \
-	    -output='bin/gopher_{{.OS}}_{{.Arch}}' \
-	    -ldflags='-extldflags "-static" -X github.com/previousnext/gopher/cmd.GitVersion=${VERSION} -X github.com/previousnext/gopher/cmd.GitCommit=${COMMIT}' \
+	    -output='bin/login_{{.OS}}_{{.Arch}}' \
+	    -ldflags='-extldflags "-static" -X github.com/previousnext/login/cmd.GitVersion=${VERSION} -X github.com/previousnext/login/cmd.GitCommit=${COMMIT}' \
 	    $(PROJECT)
 
 # Run all lint checking with exit codes for CI.
@@ -22,7 +22,7 @@ lint:
 test:
 	go test -cover ./...
 
-IMAGE=previousnext/gopher
+IMAGE=previousnext/login
 
 # Releases the project Docker Hub.
 release-docker:
