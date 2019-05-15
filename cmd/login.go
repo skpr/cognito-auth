@@ -15,6 +15,9 @@ type cmdLogin struct {
 	Username string
 	Password string
 	ClientID string
+	IdentityPoolID string
+	UserPoolID string
+	Region string
 }
 
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
@@ -22,7 +25,8 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 	if err != nil {
 		fmt.Println(err)
 	}
-	config := aws.NewConfig().WithRegion("ap-southeast-2")
+	region := "ap-southeast-2"
+	config := aws.NewConfig().WithRegion(region)
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess, config)
 
 	authInput := new(cognitoidentityprovider.InitiateAuthInput)
@@ -53,27 +57,34 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 	result := authOutput.AuthenticationResult
 	accessToken := result.AccessToken
 
+	identityService := cognitoidentity.New(sess, config)
 
-	//getCredsInput := cognitoidentity.GetCredentialsForIdentityInput{
-	//	IdentityId:
-	//}
-	//
-	//cognitoidentity.GetCredentialsForIdentity(getCredsInput)
-	//{
-	//identity_id: "IdentityId",
-	//logins: {
-	//	"IdentityProviderName" => "IdentityProviderToken",
-	//},
-	//custom_role_arn: "ARNString",
-	//})
+	logins := map[string]*string{
+		v.UserPoolID: result.IdToken,
+	}
+	getIdInput := cognitoidentity.GetIdInput{
+		IdentityPoolId: &v.IdentityPoolID,
+		Logins:         logins,
+	}
 
-	//idToken := result.IdToken
-	//sess.Config.WithCredentials(cognitoidentity.Credentials{
-	//
-	//})
+	getIdOutput, err := identityService.GetId(&getIdInput)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-	creds := new(cognitoidentity.Credentials)
-	creds.SetSessionToken()
+	getCredsInput := cognitoidentity.GetCredentialsForIdentityInput{
+		IdentityId: getIdOutput.IdentityId,
+		Logins:     logins,
+	}
+
+	getCredsOutput, err := identityService.GetCredentialsForIdentity(&getCredsInput)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(getCredsOutput.String())
+
 	userInput := new(cognitoidentityprovider.GetUserInput)
 	userInput.SetAccessToken(*accessToken)
 	userOutput, err := cognitoIdentityProvider.GetUser(userInput)
@@ -94,4 +105,7 @@ func Login(app *kingpin.Application) {
 	command.Flag("clientid", "Client ID for authentication").Required().StringVar(&v.ClientID)
 	command.Flag("username", "Username for authentication").Required().StringVar(&v.Username)
 	command.Flag("password", "Password for authentication").Required().StringVar(&v.Password)
+	command.Flag("identity-pool-id", "The identity pool ID.").Required().StringVar(&v.IdentityPoolID)
+	command.Flag("user-pool-id", "The user pool ID.").Required().StringVar(&v.UserPoolID)
+	command.Flag("region", "The AWS region").Required().StringVar(&v.Region)
 }

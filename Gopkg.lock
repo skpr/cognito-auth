@@ -54,6 +54,7 @@
     "private/protocol/query/queryutil",
     "private/protocol/rest",
     "private/protocol/xml/xmlutil",
+    "service/cognitoidentity",
     "service/cognitoidentityprovider",
     "service/sts",
   ]
@@ -167,6 +168,7 @@
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/awserr",
     "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/cognitoidentity",
     "github.com/aws/aws-sdk-go/service/cognitoidentityprovider",
     "github.com/gosuri/uitable",
     "github.com/pkg/errors",
