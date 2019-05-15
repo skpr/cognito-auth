@@ -68,6 +68,8 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		os.Exit(1)
 	}
 
+	fmt.Println(idOutput.String())
+
 	credsOutput, err := identityService.GetCredentialsForIdentity(&cognitoidentity.GetCredentialsForIdentityInput{
 		IdentityId: idOutput.IdentityId,
 		Logins:     logins,
@@ -100,5 +102,5 @@ func Login(app *kingpin.Application) {
 	command.Flag("password", "Password for authentication").Required().StringVar(&v.Password)
 	command.Flag("identity-pool-id", "The identity pool ID.").Required().StringVar(&v.IdentityPoolID)
 	command.Flag("user-pool-id", "The user pool ID.").Required().StringVar(&v.UserPoolID)
-	command.Flag("region", "The AWS region").Required().Default("ap-southeast-2").StringVar(&v.Region)
+	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
 }
