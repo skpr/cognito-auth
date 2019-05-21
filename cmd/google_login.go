@@ -27,7 +27,7 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 		RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
 		ClientID:     v.ClientID,
 		ClientSecret: v.ClientSecret,
-		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
+		Scopes:       []string{"openid email"},
 		Endpoint:     google.Endpoint,
 	}
 
@@ -41,7 +41,6 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 		fmt.Printf("Failed to read code: %v", err)
 	}
 	code := string(bytecode)
-	fmt.Println(code)
 
 	token, err := googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
@@ -53,6 +52,14 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 	fmt.Println("Access token: " + token.AccessToken)
 	fmt.Println("Token type: " + token.TokenType)
 	fmt.Println("Expiry: " + token.Expiry.String())
+
+	// Extract the ID Token from OAuth2 token.
+	idToken, ok := token.Extra("id_token").(string)
+	if !ok {
+		fmt.Println("Missing id_token")
+		os.Exit(1)
+	}
+	fmt.Println("ID token: " + idToken)
 
 	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	if err != nil {
@@ -66,7 +73,7 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 		os.Exit(1)
 	}
 	body := string(bodyBytes)
-	fmt.Println(body)
+	fmt.Println("User info: " + body)
 
 	return nil
 }
