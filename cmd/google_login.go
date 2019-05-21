@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -74,6 +77,38 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 	}
 	body := string(bodyBytes)
 	fmt.Println("User info: " + body)
+
+	sess, err := session.NewSession()
+	if err != nil {
+		fmt.Println(err)
+	}
+	config := aws.NewConfig().WithRegion(v.Region)
+
+	identityService := cognitoidentity.New(sess, config)
+
+	logins := map[string]*string{
+		"accounts.google.com": &idToken,
+	}
+	idOutput, err := identityService.GetId(&cognitoidentity.GetIdInput{
+		IdentityPoolId: &v.IdentityPoolID,
+		Logins:         logins,
+	})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Println(idOutput.String())
+
+	credsOutput, err := identityService.GetCredentialsForIdentity(&cognitoidentity.GetCredentialsForIdentityInput{
+		IdentityId: idOutput.IdentityId,
+		Logins:     logins,
+	})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(credsOutput.String())
 
 	return nil
 }

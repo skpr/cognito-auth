@@ -26,6 +26,7 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		fmt.Println(err)
 	}
 	config := aws.NewConfig().WithRegion(v.Region)
+
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess, config)
 
 	authInput := new(cognitoidentityprovider.InitiateAuthInput)
