@@ -156,7 +156,7 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 	query = federationUrl.Query()
 	query.Add("Action", "login")
 	query.Add("Issuer", "example.com")
-	query.Add("Destination", "https://console.aws.amazon.com/")
+	query.Add("Destination", "https://console.aws.amazon.com/cloudwatch")
 	query.Add("SigninToken", signInToken)
 
 	federationUrl.RawQuery = query.Encode()
