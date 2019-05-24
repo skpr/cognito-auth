@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -8,6 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -18,6 +22,11 @@ type cmdLogin struct {
 	IdentityPoolID string
 	UserPoolID     string
 	Region         string
+}
+
+type Bird struct {
+	Species string
+	Description string
 }
 
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
@@ -71,7 +80,7 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 
 	fmt.Println(idOutput.String())
 
-	credsOutput, err := identityService.GetCredentialsForIdentity(&cognitoidentity.GetCredentialsForIdentityInput{
+	creds, err := identityService.GetCredentialsForIdentity(&cognitoidentity.GetCredentialsForIdentityInput{
 		IdentityId: idOutput.IdentityId,
 		Logins:     logins,
 	})
@@ -79,7 +88,7 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Println(credsOutput.String())
+	fmt.Println(creds.String())
 
 	userOutput, err := cognitoIdentityProvider.GetUser(&cognitoidentityprovider.GetUserInput{
 		AccessToken: accessToken,
@@ -89,6 +98,86 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		os.Exit(1)
 	}
 	fmt.Println(userOutput.String())
+
+	// Get console federated login link
+	federationUrl := url.URL{
+		Scheme: "https",
+		Host:   "signin.aws.amazon.com",
+		Path:   "/federation",
+	}
+
+	sessionParams := map[string]string{
+		"sessionId":    *creds.Credentials.AccessKeyId,
+		"sessionKey":   *creds.Credentials.SecretKey,
+		"sessionToken": *creds.Credentials.SessionToken,
+	}
+	jsonParams, _ := json.Marshal(sessionParams)
+
+	query := federationUrl.Query()
+	query.Add("Action", "getSigninToken")
+	query.Add("SessionDuration", "43200")
+	query.Add("Session", string(jsonParams))
+	federationUrl.RawQuery = query.Encode()
+
+	fmt.Println()
+	fmt.Println(federationUrl.String())
+
+	response, err := http.Get(federationUrl.String())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer response.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Failed reading response body: %s", err.Error())
+		os.Exit(1)
+	}
+	body := string(bodyBytes)
+
+	fmt.Println()
+	fmt.Println(body)
+
+	data := map[string]string{}
+	err = json.Unmarshal(bodyBytes, &data)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	signInToken := data["SigninToken"]
+
+	federationUrl = url.URL{
+		Scheme: "https",
+		Host:   "signin.aws.amazon.com",
+		Path:   "/federation",
+	}
+
+	query = federationUrl.Query()
+	query.Add("Action", "login")
+	query.Add("Issuer", "example.com")
+	query.Add("Destination", "https://console.aws.amazon.com/")
+	query.Add("SigninToken", signInToken)
+
+	federationUrl.RawQuery = query.Encode()
+
+	fmt.Println()
+	fmt.Println(federationUrl.String())
+
+	response, err = http.Get(federationUrl.String())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer response.Body.Close()
+	bodyBytes, err = ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Failed reading response body: %s", err.Error())
+		os.Exit(1)
+	}
+	body = string(bodyBytes)
+	fmt.Println()
+	fmt.Println(body)
 
 	return nil
 }
