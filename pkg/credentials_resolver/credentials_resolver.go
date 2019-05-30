@@ -191,10 +191,15 @@ func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauth_tokens.OAut
 		cognitoidentityprovider.AuthFlowTypeRefreshToken: &expiredTokens.RefreshToken,
 	})
 	authOutput, err := cognitoIdentityProvider.InitiateAuth(authInput)
+	if err != nil {
+		return oauth_tokens.OAuthTokens{}, errors.Wrap(err, "Failed to refresh oauth2 tokens")
+	}
 
 	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
+	// We don't get a refresh token for a refresh auth request, so add it back.
+	tokens.RefreshToken = expiredTokens.RefreshToken
 
-	err = oauth_tokens.SaveToFile(r.ConfigDir+"/"+CognitoConfigFile, tokens)
+	err = oauth_tokens.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
 	if err != nil {
 		return oauth_tokens.OAuthTokens{}, errors.Wrap(err, "Failed to save oauth2 tokens")
 	}
@@ -209,8 +214,10 @@ func (r *CredentialsResolver) extractTokensFromAuthResult(authResult *cognitoide
 	tokens := oauth_tokens.OAuthTokens{
 		AccessToken:  *authResult.AccessToken,
 		Expiry:       expiry,
-		RefreshToken: *authResult.RefreshToken,
 		IdToken:      *authResult.IdToken,
+	}
+	if authResult.RefreshToken != nil {
+		tokens.RefreshToken = *authResult.RefreshToken
 	}
 	return tokens
 }

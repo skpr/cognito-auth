@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/previousnext/login/pkg/console_signin"
 	"github.com/previousnext/login/pkg/credentials_resolver"
@@ -11,10 +12,12 @@ import (
 
 type cmdConsoleSignIn struct {
 	ConfigDir string
+	Region    string
 }
 
 func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
-	sess, err := session.NewSession()
+	config := aws.NewConfig().WithRegion(v.Region)
+	sess, err := session.NewSession(config)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -24,7 +27,7 @@ func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	signin,err := console_signin.New(resolver)
+	signin, err := console_signin.New(resolver)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -49,4 +52,6 @@ func ConsoleSignIn(app *kingpin.Application) {
 		fmt.Println(err)
 	}
 	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/skpr").StringVar(&v.ConfigDir)
+	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
+
 }
