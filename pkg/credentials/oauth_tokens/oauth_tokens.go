@@ -12,6 +12,7 @@ import (
 type OAuthTokens struct {
 	AccessToken  string    `yaml:"access_token"`
 	RefreshToken string    `yaml:"refresh_token"`
+	IdToken      string    `yaml:"id_token"`
 	Expiry       time.Time `yaml:"expiry"`
 }
 
@@ -75,6 +76,10 @@ func (c *OAuthTokens) Validate() error {
 
 	if c.RefreshToken == "" {
 		return errors.New("not found: refresh_token")
+	}
+
+	if c.IdToken == "" {
+		return errors.New("not found: id_token")
 	}
 
 	return nil
