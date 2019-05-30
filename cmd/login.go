@@ -24,11 +24,6 @@ type cmdLogin struct {
 	Region         string
 }
 
-type Bird struct {
-	Species string
-	Description string
-}
-
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 	sess, err := session.NewSession()
 	if err != nil {
@@ -155,7 +150,7 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 
 	query = federationUrl.Query()
 	query.Add("Action", "login")
-	query.Add("Issuer", "example.com")
+	query.Add("Issuer", "login.test.skpr.io")
 	query.Add("Destination", "https://console.aws.amazon.com/cloudwatch")
 	query.Add("SigninToken", signInToken)
 

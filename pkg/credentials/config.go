@@ -1,4 +1,4 @@
-package config
+package credentials
 
 import (
 	"fmt"
@@ -19,17 +19,17 @@ func LoadFromFile(file, name string) (Config, error) {
 	var Configs map[string]Config
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return Config{}, errors.Wrap(err, "Failed to load config")
+		return Config{}, errors.Wrap(err, "Failed to load credentials")
 	}
 
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
-		return Config{}, errors.Wrap(err, "Failed to read config")
+		return Config{}, errors.Wrap(err, "Failed to read credentials")
 	}
 
 	err = yaml.Unmarshal(data, &Configs)
 	if err != nil {
-		return Config{}, errors.Wrap(err, "Failed to marshal config")
+		return Config{}, errors.Wrap(err, "Failed to marshal credentials")
 	}
 
 	if _, ok := Configs[name]; !ok {
