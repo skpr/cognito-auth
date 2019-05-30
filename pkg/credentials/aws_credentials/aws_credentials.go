@@ -65,6 +65,15 @@ func SaveToFile(file string, credentials AwsCredentials) error {
 	return nil
 }
 
+// Deletes the credentials file.
+func Delete(file string) error {
+	err := os.Remove(file)
+	if err != nil {
+		return errors.Wrap(err, "Failed to delete credentials file")
+	}
+	return nil
+}
+
 // Validate the aws credentials.
 func (c *AwsCredentials) Validate() error {
 	if c.AccessKey == "" {

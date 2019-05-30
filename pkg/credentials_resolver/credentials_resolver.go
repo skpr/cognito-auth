@@ -11,11 +11,10 @@ import (
 	"time"
 )
 
-var (
+const (
 	AwsCredentialsFile = "aws_credentials.yml"
 	OAuthTokensFile    = "oauth_tokens.yml"
 	CognitoConfigFile  = "cognito_config.yml"
-	AwsRegion          = "ap-southeast-2"
 )
 
 type CredentialsResolver struct {
@@ -65,10 +64,39 @@ func (r *CredentialsResolver) Login(username string, password string) (aws_crede
 
 }
 
+// Logs out the current user.
+func (r *CredentialsResolver) Logout() error {
+
+	tokens, err := r.getOAuthTokens()
+	if err != nil {
+		return err
+	}
+	cognitoIdentityProvider := cognitoidentityprovider.New(r.AwsSession)
+	signoutInput := cognitoidentityprovider.GlobalSignOutInput{
+		AccessToken: &tokens.AccessToken,
+	}
+	_, err = cognitoIdentityProvider.GlobalSignOut(&signoutInput)
+	if err != nil {
+		return errors.Wrap(err, "Failed to sign out")
+	}
+
+	err = aws_credentials.Delete(r.ConfigDir+"/"+AwsCredentialsFile)
+	if err != nil {
+		return err
+	}
+	err = oauth_tokens.Delete(r.ConfigDir+"/"+OAuthTokensFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Returns the AWS Credentials, refreshing if expired.
 func (r *CredentialsResolver) GetAwsCredentials() (aws_credentials.AwsCredentials, error) {
 
-	creds, err := aws_credentials.LoadFromFile(r.ConfigDir + "/" + AwsCredentialsFile)
+	credentialsFile := r.ConfigDir + "/" + AwsCredentialsFile
+	creds, err := aws_credentials.LoadFromFile(credentialsFile)
 	if err != nil {
 		return aws_credentials.AwsCredentials{}, errors.Wrap(err, "Could not load aws credentials")
 	}

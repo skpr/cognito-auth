@@ -68,6 +68,15 @@ func SaveToFile(filename string, token OAuthTokens) error {
 	return nil
 }
 
+// Deletes the tokens file.
+func Delete(file string) error {
+	err := os.Remove(file)
+	if err != nil {
+		return errors.Wrap(err, "Failed to delete tokens file")
+	}
+	return nil
+}
+
 // Validate the OAuth token file.
 func (c *OAuthTokens) Validate() error {
 	if c.AccessToken == "" {

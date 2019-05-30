@@ -11,6 +11,7 @@ func main() {
 	app := kingpin.New("login", "Example Cognito CLI login.")
 
 	cmd.Login(app)
+	cmd.Logout(app)
 	cmd.GoogleLogin(app)
 	cmd.ForgotPassword(app)
 	cmd.ConsoleSignIn(app)
