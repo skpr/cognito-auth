@@ -56,6 +56,10 @@ func (r *CredentialsResolver) Login(username string, password string) (aws_crede
 	}
 
 	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
+	err = oauth_tokens.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+	if err != nil {
+		return aws_credentials.AwsCredentials{}, errors.Wrap(err, "Could not save oauth tokens")
+	}
 
 	return r.getTempCredentialsForTokens(tokens)
 
@@ -90,7 +94,7 @@ func (r *CredentialsResolver) refreshAwsCredentials() (aws_credentials.AwsCreden
 
 }
 
-// Get temporary STS AWS credentials for the oauth tokens.
+// Get temporary STS AWS credentials for the oauth tokens, and save them.
 func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauth_tokens.OAuthTokens) (aws_credentials.AwsCredentials, error) {
 	identityService := cognitoidentity.New(r.AwsSession)
 
@@ -136,6 +140,10 @@ func (r *CredentialsResolver) getOAuthTokens() (oauth_tokens.OAuthTokens, error)
 	}
 	if tokens.HasExpired() {
 		tokens, err = r.refreshOAuthTokens(tokens)
+		err = oauth_tokens.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+		if err != nil {
+			return oauth_tokens.OAuthTokens{}, errors.Wrap(err, "Could not save oauth tokens")
+		}
 	}
 
 	return tokens, nil

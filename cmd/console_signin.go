@@ -17,18 +17,23 @@ func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
 	sess, err := session.NewSession()
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 	resolver, err := credentials_resolver.New(v.ConfigDir, sess)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 	signin,err := console_signin.New(resolver)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 	link, err := signin.GetSignInLink()
 	if err != nil {
 		fmt.Println(err)
+		fmt.Println("Please login")
+		os.Exit(1)
 	}
 	fmt.Println(link)
 
