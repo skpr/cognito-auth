@@ -19,16 +19,46 @@ var (
 )
 
 type CredentialsResolver struct {
-	ConfigDir  string
-	AwsSession client.ConfigProvider
+	ConfigDir     string
+	AwsSession    client.ConfigProvider
+	CognitoConfig cognito_config.CognitoConfig
 }
 
 // Creates a new credentials resolver.
 func New(configDir string, sess client.ConfigProvider) (CredentialsResolver, error) {
+	cognitoConfig, err := cognito_config.LoadFromFile(configDir + "/" + CognitoConfigFile)
+	if err != nil {
+		return CredentialsResolver{}, errors.Wrap(err, "Failed to load cognito config")
+	}
 	return CredentialsResolver{
-		ConfigDir:  configDir,
-		AwsSession: sess,
+		ConfigDir:     configDir,
+		AwsSession:    sess,
+		CognitoConfig: cognitoConfig,
 	}, nil
+}
+
+// Login a user with username and password.
+func (r *CredentialsResolver) Login(username string, password string) (aws_credentials.AwsCredentials, error) {
+
+	cognitoIdentityProvider := cognitoidentityprovider.New(r.AwsSession)
+
+	authInput := new(cognitoidentityprovider.InitiateAuthInput)
+	authInput.SetAuthFlow(cognitoidentityprovider.AuthFlowTypeUserPasswordAuth)
+	authInput.SetClientId(r.CognitoConfig.ClientID)
+
+	authInput.SetAuthParameters(map[string]*string{
+		"USERNAME": &username,
+		"PASSWORD": &password,
+	})
+	authOutput, err := cognitoIdentityProvider.InitiateAuth(authInput)
+	if err != nil {
+		return aws_credentials.AwsCredentials{}, errors.Wrap(err, "Failed to login to identity provider")
+	}
+
+	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
+
+	return r.getTempCredentialsForTokens(tokens)
+
 }
 
 // Returns the AWS Credentials, refreshing if expired.
@@ -53,18 +83,22 @@ func (r *CredentialsResolver) refreshAwsCredentials() (aws_credentials.AwsCreden
 
 	tokens, err := r.getOAuthTokens()
 	if err != nil {
-		return aws_credentials.AwsCredentials{}, errors.Wrap(err, "Could not load oauth tokens")
+		return aws_credentials.AwsCredentials{}, errors.Wrap(err, "Failed to load oauth tokens")
 	}
 
-	cognitoConfig, err := cognito_config.LoadFromFile(r.ConfigDir + "/" + CognitoConfigFile)
+	return r.getTempCredentialsForTokens(tokens)
 
+}
+
+// Get temporary STS AWS credentials for the oauth tokens.
+func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauth_tokens.OAuthTokens) (aws_credentials.AwsCredentials, error) {
 	identityService := cognitoidentity.New(r.AwsSession)
 
 	logins := map[string]*string{
-		cognitoConfig.UserPoolID: &tokens.IdToken,
+		r.CognitoConfig.UserPoolID: &tokens.IdToken,
 	}
 	idOutput, err := identityService.GetId(&cognitoidentity.GetIdInput{
-		IdentityPoolId: &cognitoConfig.IdentityPoolID,
+		IdentityPoolId: &r.CognitoConfig.IdentityPoolID,
 		Logins:         logins,
 	})
 	if err != nil {
@@ -122,13 +156,7 @@ func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauth_tokens.OAut
 	})
 	authOutput, err := cognitoIdentityProvider.InitiateAuth(authInput)
 
-	ttl := time.Duration(*authOutput.AuthenticationResult.ExpiresIn * int64(time.Second))
-	expiry := time.Now().Add(ttl).Truncate(time.Duration(time.Second))
-	tokens := oauth_tokens.OAuthTokens{
-		AccessToken:  *authOutput.AuthenticationResult.AccessToken,
-		Expiry:       expiry,
-		RefreshToken: *authOutput.AuthenticationResult.RefreshToken,
-	}
+	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
 
 	err = oauth_tokens.SaveToFile(r.ConfigDir+"/"+CognitoConfigFile, tokens)
 	if err != nil {
@@ -136,4 +164,17 @@ func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauth_tokens.OAut
 	}
 
 	return tokens, nil
+}
+
+// Extract oauth tokens from the authentication result.
+func (r *CredentialsResolver) extractTokensFromAuthResult(authResult *cognitoidentityprovider.AuthenticationResultType) oauth_tokens.OAuthTokens {
+	ttl := time.Duration(*authResult.ExpiresIn * int64(time.Second))
+	expiry := time.Now().Add(ttl).Truncate(time.Duration(time.Second))
+	tokens := oauth_tokens.OAuthTokens{
+		AccessToken:  *authResult.AccessToken,
+		Expiry:       expiry,
+		RefreshToken: *authResult.RefreshToken,
+		IdToken:      *authResult.IdToken,
+	}
+	return tokens
 }
