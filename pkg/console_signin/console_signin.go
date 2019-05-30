@@ -3,7 +3,6 @@ package console_signin
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/pkg/errors"
 	"github.com/previousnext/login/pkg/credentials_resolver"
 	"io/ioutil"
@@ -13,19 +12,20 @@ import (
 )
 
 type ConsoleSignin struct {
-	ConfigDir  string
-	AwsSession client.ConfigProvider
+	CredentialsResolver credentials_resolver.CredentialsResolver
+}
+
+// Creates a new credentials resolver.
+func New(resolver credentials_resolver.CredentialsResolver) (ConsoleSignin, error) {
+	return ConsoleSignin{
+		CredentialsResolver: resolver,
+	}, nil
 }
 
 // Gets the federated console sign in link.
-func (c *ConsoleSignin) getSignInLink() (string, error) {
+func (c *ConsoleSignin) GetSignInLink() (string, error) {
 
-	resolver, err := credentials_resolver.New(c.ConfigDir, c.AwsSession)
-	if err != nil {
-		return "", errors.Wrap(err, "Failed creating credentials resolver")
-	}
-
-	creds, err := resolver.GetAwsCredentials()
+	creds, err := c.CredentialsResolver.GetAwsCredentials()
 	if err != nil {
 		return "", errors.Wrap(err, "Failed getting credentials")
 	}
