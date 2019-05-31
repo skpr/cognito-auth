@@ -13,7 +13,7 @@ func main() {
 	cmd.Login(app)
 	cmd.Logout(app)
 	cmd.GoogleLogin(app)
-	cmd.ForgotPassword(app)
+	cmd.ResetPassword(app)
 	cmd.ConsoleSignIn(app)
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))

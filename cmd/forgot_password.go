@@ -13,14 +13,14 @@ import (
 	"syscall"
 )
 
-type cmdForgotPassword struct {
+type cmdResetPassword struct {
 	Username  string
 	ClientID  string
 	ConfigDir string
 	Region    string
 }
 
-func (v *cmdForgotPassword) run(c *kingpin.ParseContext) error {
+func (v *cmdResetPassword) run(c *kingpin.ParseContext) error {
 
 	config := aws.NewConfig().WithRegion(v.Region)
 	sess, err := session.NewSession(config)
@@ -109,9 +109,9 @@ func (v *cmdForgotPassword) run(c *kingpin.ParseContext) error {
 	return nil
 }
 
-// ForgotPassword sub-command.
-func ForgotPassword(app *kingpin.Application) {
-	v := new(cmdForgotPassword)
+// ResetPassword sub-command.
+func ResetPassword(app *kingpin.Application) {
+	v := new(cmdResetPassword)
 
 	command := app.Command("reset-password", "Starts the reset password process.").Action(v.run)
 	command.Flag("username", "The username").Required().StringVar(&v.Username)
