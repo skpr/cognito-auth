@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/skpr/cognito-auth/pkg/config/cognito"
 	"github.com/skpr/cognito-auth/pkg/credentials/aws"
-	"github.com/skpr/cognito-auth/pkg/credentials/oauthtokens"
+	"github.com/skpr/cognito-auth/pkg/credentials/oauth"
 	"time"
 )
 
@@ -57,7 +57,7 @@ func (r *CredentialsResolver) Login(username string, password string) (aws.Crede
 	}
 
 	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
-	err = oauthtokens.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+	err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
 	if err != nil {
 		return aws.Credentials{}, errors.Wrap(err, "Could not save oauth tokens")
 	}
@@ -86,7 +86,7 @@ func (r *CredentialsResolver) Logout() error {
 	if err != nil {
 		return err
 	}
-	err = oauthtokens.Delete(r.ConfigDir+"/"+OAuthTokensFile)
+	err = oauth.Delete(r.ConfigDir+"/"+OAuthTokensFile)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (r *CredentialsResolver) refreshAwsCredentials() (aws.Credentials, error) {
 }
 
 // getTempCredentialsForTokens gets the temporary STS AWS credentials for the oauth tokens, and saves them.
-func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauthtokens.OAuthTokens) (aws.Credentials, error) {
+func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauth.Tokens) (aws.Credentials, error) {
 	identityService := cognitoidentity.New(r.AwsSession)
 
 	logins := map[string]*string{
@@ -163,16 +163,16 @@ func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauthtokens.OAu
 }
 
 // getOAuthTokens gets the OAuth2 tokens, refreshing if expired.
-func (r *CredentialsResolver) getOAuthTokens() (oauthtokens.OAuthTokens, error) {
-	tokens, err := oauthtokens.LoadFromFile(r.ConfigDir + "/" + OAuthTokensFile)
+func (r *CredentialsResolver) getOAuthTokens() (oauth.Tokens, error) {
+	tokens, err := oauth.LoadFromFile(r.ConfigDir + "/" + OAuthTokensFile)
 	if err != nil {
-		return oauthtokens.OAuthTokens{}, errors.Wrap(err, "Could not load oauth tokens")
+		return oauth.Tokens{}, errors.Wrap(err, "Could not load oauth tokens")
 	}
 	if tokens.HasExpired() {
 		tokens, err = r.refreshOAuthTokens(tokens)
-		err = oauthtokens.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+		err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
 		if err != nil {
-			return oauthtokens.OAuthTokens{}, errors.Wrap(err, "Could not save oauth tokens")
+			return oauth.Tokens{}, errors.Wrap(err, "Could not save oauth tokens")
 		}
 	}
 
@@ -180,7 +180,7 @@ func (r *CredentialsResolver) getOAuthTokens() (oauthtokens.OAuthTokens, error) 
 }
 
 // refreshOAuthTokens refreshes the oauth tokens, and saves them to file.
-func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauthtokens.OAuthTokens) (oauthtokens.OAuthTokens, error) {
+func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauth.Tokens) (oauth.Tokens, error) {
 
 	cognitoConfig, err := cognito.LoadFromFile(r.ConfigDir + "/" + CognitoConfigFile)
 
@@ -194,26 +194,26 @@ func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauthtokens.OAuth
 	})
 	authOutput, err := cognitoIdentityProvider.InitiateAuth(authInput)
 	if err != nil {
-		return oauthtokens.OAuthTokens{}, errors.Wrap(err, "Failed to refresh oauth2 tokens")
+		return oauth.Tokens{}, errors.Wrap(err, "Failed to refresh oauth2 tokens")
 	}
 
 	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
 	// We don't get a refresh token for a refresh auth request, so add it back.
 	tokens.RefreshToken = expiredTokens.RefreshToken
 
-	err = oauthtokens.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+	err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
 	if err != nil {
-		return oauthtokens.OAuthTokens{}, errors.Wrap(err, "Failed to save oauth2 tokens")
+		return oauth.Tokens{}, errors.Wrap(err, "Failed to save oauth2 tokens")
 	}
 
 	return tokens, nil
 }
 
 // extractTokensFromAuthResult extracts oauth tokens from the authentication result.
-func (r *CredentialsResolver) extractTokensFromAuthResult(authResult *cognitoidentityprovider.AuthenticationResultType) oauthtokens.OAuthTokens {
+func (r *CredentialsResolver) extractTokensFromAuthResult(authResult *cognitoidentityprovider.AuthenticationResultType) oauth.Tokens {
 	ttl := time.Duration(*authResult.ExpiresIn * int64(time.Second))
 	expiry := time.Now().Add(ttl).Truncate(time.Duration(time.Second))
-	tokens := oauthtokens.OAuthTokens{
+	tokens := oauth.Tokens{
 		AccessToken: *authResult.AccessToken,
 		Expiry:      expiry,
 		IDToken:     *authResult.IdToken,

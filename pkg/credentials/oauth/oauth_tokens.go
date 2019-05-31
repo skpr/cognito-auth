@@ -1,4 +1,4 @@
-package oauthtokens
+package oauth
 
 import (
 	"github.com/pkg/errors"
@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// OAuthTokens type
-type OAuthTokens struct {
+// Tokens type
+type Tokens struct {
 	AccessToken  string    `yaml:"access_token"`
 	RefreshToken string    `yaml:"refresh_token"`
 	IDToken      string    `yaml:"id_token"`
@@ -18,34 +18,34 @@ type OAuthTokens struct {
 }
 
 // LoadFromFile will return the oauth token from a file.
-func LoadFromFile(filename string) (OAuthTokens, error) {
+func LoadFromFile(filename string) (Tokens, error) {
 
-	var token OAuthTokens
+	var token Tokens
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return OAuthTokens{}, errors.Wrap(err, "failed to load token")
+		return Tokens{}, errors.Wrap(err, "failed to load token")
 	}
 
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return OAuthTokens{}, errors.Wrap(err, "failed to read token")
+		return Tokens{}, errors.Wrap(err, "failed to read token")
 	}
 
 	err = yaml.Unmarshal(data, &token)
 	if err != nil {
-		return OAuthTokens{}, errors.Wrap(err, "failed to unmarshal token")
+		return Tokens{}, errors.Wrap(err, "failed to unmarshal token")
 	}
 
 	err = token.Validate()
 	if err != nil {
-		return OAuthTokens{}, errors.Wrap(err, "validation failed")
+		return Tokens{}, errors.Wrap(err, "validation failed")
 	}
 
 	return token, nil
 }
 
 // SaveToFile writes an oauth token to file
-func SaveToFile(filename string, token OAuthTokens) error {
+func SaveToFile(filename string, token Tokens) error {
 
 	// Create parent directory if it doesn't exist.
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
@@ -79,7 +79,7 @@ func Delete(file string) error {
 }
 
 // Validate the OAuth token file.
-func (c *OAuthTokens) Validate() error {
+func (c *Tokens) Validate() error {
 	if c.AccessToken == "" {
 		return errors.New("not found: access_token")
 	}
@@ -96,6 +96,6 @@ func (c *OAuthTokens) Validate() error {
 }
 
 // HasExpired checks if the token has expired.
-func (c *OAuthTokens) HasExpired() bool {
+func (c *Tokens) HasExpired() bool {
 	return c.Expiry.Before(time.Now())
 }

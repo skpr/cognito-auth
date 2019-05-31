@@ -1,6 +1,6 @@
 // +build unit
 
-package oauthtokens
+package oauth
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -12,17 +12,17 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 
 	expiry := time.Now().Add(time.Duration(300 * time.Second)).Truncate(time.Duration(time.Second))
 
-	tokens := OAuthTokens{
+	tokens := Tokens{
 		AccessToken:  "ABCDEFGHIJKLMNOP1234567890",
 		RefreshToken: "ABCDEFGHIJKLMNOP",
 		IDToken:      "0123456789ABCDEF",
 		Expiry:       expiry,
 	}
 
-	err := SaveToFile("/tmp/skpr/oauthtokens.yml", tokens)
+	err := SaveToFile("/tmp/skpr/oauth.yml", tokens)
 	assert.Nil(t, err)
 
-	tokens, err = LoadFromFile("/tmp/skpr/oauthtokens.yml")
+	tokens, err = LoadFromFile("/tmp/skpr/oauth.yml")
 	assert.Nil(t, err)
 
 	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", AccessToken, "access_token was set")
@@ -33,7 +33,7 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 
 func TestHasExpired(t *testing.T) {
 	expiry := time.Now().Add(time.Duration(-300 * time.Second)).Truncate(time.Duration(time.Second))
-	tokens := OAuthTokens{
+	tokens := Tokens{
 		AccessToken:  "ABCDEFGHIJKLMNOP1234567890",
 		RefreshToken: "ABCDEFGHIJKLMNOP",
 		IDToken:      "0123456789ABCDEF",
