@@ -13,9 +13,9 @@ import (
 
 // Constants
 const (
-	AwsCredentialsFile = "credentials.yml"
-	OAuthTokensFile    = "oauthtokens.yml"
-	CognitoConfigFile  = "config.yml"
+	AwsCredentialsFile = "aws_credentials.yml"
+	OAuthTokensFile    = "oauth_tokens.yml"
+	CognitoConfigFile  = "cognito_config.yml"
 )
 
 // CredentialsResolver type
