@@ -8,7 +8,7 @@ import (
 
 func TestSaveAndLoadFromFile(t *testing.T) {
 
-	expiry := time.Now().Add(time.Duration(300 * time.Second)).Truncate(time.Duration(time.Second))
+	expiry := time.Now().UTC().Add(time.Duration(300 * time.Second)).Truncate(time.Duration(time.Second))
 
 	tokens := Tokens{
 		AccessToken:  "ABCDEFGHIJKLMNOP1234567890",
@@ -30,7 +30,7 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 }
 
 func TestHasExpired(t *testing.T) {
-	expiry := time.Now().Add(time.Duration(-300 * time.Second)).Truncate(time.Duration(time.Second))
+	expiry := time.Now().UTC().Add(time.Duration(-300 * time.Second)).Truncate(time.Duration(time.Second))
 	tokens := Tokens{
 		AccessToken:  "ABCDEFGHIJKLMNOP1234567890",
 		RefreshToken: "ABCDEFGHIJKLMNOP",
