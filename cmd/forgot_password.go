@@ -46,6 +46,7 @@ func (v *cmdForgotPassword) run(c *kingpin.ParseContext) error {
 	text = strings.TrimSpace(text)
 
 	if !strings.ContainsAny(text, "yY") {
+		fmt.Println("Cancelled")
 		os.Exit(0)
 	}
 
@@ -55,7 +56,8 @@ func (v *cmdForgotPassword) run(c *kingpin.ParseContext) error {
 		os.Exit(1)
 	}
 
-	fmt.Print("Enter the confirmation code: ")
+	fmt.Println("Please check your email for a password reset code.")
+	fmt.Print("Enter the password reset code: ")
 
 	code, _ := reader.ReadString('\n')
 	code = strings.TrimSpace(code)
@@ -75,13 +77,33 @@ func (v *cmdForgotPassword) run(c *kingpin.ParseContext) error {
 	password := string(bytecode)
 	password = strings.TrimSpace(password)
 
+	fmt.Println()
+	fmt.Print("Confirm the new password: ")
+	bytecode, err = terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println()
+		fmt.Println("Failed to read password confirmation")
+		os.Exit(1)
+	}
+	confirmedPassword := string(bytecode)
+	confirmedPassword = strings.TrimSpace(confirmedPassword)
+
+	if password != confirmedPassword {
+		fmt.Println()
+		fmt.Println("Passwords do not match! Please try again.")
+		os.Exit(1)
+	}
+
 	err = f.ConfirmResetPassword(v.Username, password, code)
 	if err != nil {
 		fmt.Println(err)
+		fmt.Println()
 		fmt.Println("Failed to update password")
 		os.Exit(1)
 	}
 
+	fmt.Println()
 	fmt.Println("Password successfully updated")
 
 	return nil
