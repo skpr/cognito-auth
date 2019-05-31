@@ -47,14 +47,14 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 
 	token, err := googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		fmt.Println("Code exchange failed: %s", err.Error())
+		fmt.Println("Code exchange failed: ", err.Error())
 		os.Exit(1)
 	}
 
-	fmt.Println("Refresh token: " + token.RefreshToken)
-	fmt.Println("Access token: " + token.AccessToken)
-	fmt.Println("Token type: " + token.TokenType)
-	fmt.Println("Expiry: " + token.Expiry.String())
+	fmt.Println("Refresh token: ", token.RefreshToken)
+	fmt.Println("Access token: ", token.AccessToken)
+	fmt.Println("Token type: ", token.TokenType)
+	fmt.Println("Expiry: ", token.Expiry.String())
 
 	// Extract the ID Token from OAuth2 token.
 	idToken, ok := token.Extra("id_token").(string)
@@ -66,13 +66,13 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 
 	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	if err != nil {
-		fmt.Println("Failed getting user info: %s", err.Error())
+		fmt.Println("Failed getting user info: ", err.Error())
 		os.Exit(1)
 	}
 	defer response.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		fmt.Println("Failed reading response body: %s", err.Error())
+		fmt.Println("Failed reading response body: ", err.Error())
 		os.Exit(1)
 	}
 	body := string(bodyBytes)

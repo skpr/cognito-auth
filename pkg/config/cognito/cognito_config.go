@@ -1,4 +1,4 @@
-package config
+package cognito
 
 import (
 	"github.com/pkg/errors"
@@ -7,42 +7,42 @@ import (
 	"os"
 )
 
-// CognitoConfig type
-type CognitoConfig struct {
+// Config type
+type Config struct {
 	ClientID       string `yaml:"client_id"`
 	IdentityPoolID string `yaml:"identity_pool_id"`
 	UserPoolID     string `yaml:"user_pool_id"`
 }
 
 // LoadFromFile load aws credentials from a file.
-func LoadFromFile(file string) (CognitoConfig, error) {
+func LoadFromFile(file string) (Config, error) {
 
-	var config CognitoConfig
+	var config Config
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return CognitoConfig{}, errors.Wrap(err, "Config file does not exist")
+		return Config{}, errors.Wrap(err, "Config file does not exist")
 	}
 
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
-		return CognitoConfig{}, errors.Wrap(err, "Failed to read config file")
+		return Config{}, errors.Wrap(err, "Failed to read config file")
 	}
 
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
-		return CognitoConfig{}, errors.Wrap(err, "Failed to unmarshal credentials")
+		return Config{}, errors.Wrap(err, "Failed to unmarshal credentials")
 	}
 
 	err = config.Validate()
 	if err != nil {
-		return CognitoConfig{}, errors.Wrap(err, "Validation failed")
+		return Config{}, errors.Wrap(err, "Validation failed")
 	}
 
 	return config, nil
 }
 
 // Validate the aws credentials.
-func (c *CognitoConfig) Validate() error {
+func (c *Config) Validate() error {
 	if c.IdentityPoolID == "" {
 		return errors.New("not found: identity_pool")
 	}

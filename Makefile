@@ -10,7 +10,7 @@ COMMIT=$(shell git rev-list -1 HEAD)
 build:
 	gox -os='linux darwin' \
 	    -arch='amd64' \
-	    -output='bin/login_{{.OS}}_{{.Arch}}' \
+	    -output='bin/cognito_auth_{{.OS}}_{{.Arch}}' \
 	    -ldflags='-extldflags "-static" -X github.com/skpr/cognito-auth/cmd.GitVersion=${VERSION} -X github.com/skpr/cognito-auth/cmd.GitCommit=${COMMIT}' \
 	    $(PROJECT)
 

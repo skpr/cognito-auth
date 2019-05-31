@@ -5,7 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/config"
+	"github.com/skpr/cognito-auth/pkg/config/cognito"
 	"github.com/skpr/cognito-auth/pkg/credentials/aws"
 	"github.com/skpr/cognito-auth/pkg/credentials/oauthtokens"
 	"time"
@@ -22,12 +22,12 @@ const (
 type CredentialsResolver struct {
 	ConfigDir     string
 	AwsSession    client.ConfigProvider
-	CognitoConfig config.CognitoConfig
+	CognitoConfig cognito.Config
 }
 
 // New creates a new credentials resolver.
 func New(configDir string, sess client.ConfigProvider) (CredentialsResolver, error) {
-	cognitoConfig, err := config.LoadFromFile(configDir + "/" + CognitoConfigFile)
+	cognitoConfig, err := cognito.LoadFromFile(configDir + "/" + CognitoConfigFile)
 	if err != nil {
 		return CredentialsResolver{}, errors.Wrap(err, "Failed to load cognito config")
 	}
@@ -182,7 +182,7 @@ func (r *CredentialsResolver) getOAuthTokens() (oauthtokens.OAuthTokens, error) 
 // refreshOAuthTokens refreshes the oauth tokens, and saves them to file.
 func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauthtokens.OAuthTokens) (oauthtokens.OAuthTokens, error) {
 
-	cognitoConfig, err := config.LoadFromFile(r.ConfigDir + "/" + CognitoConfigFile)
+	cognitoConfig, err := cognito.LoadFromFile(r.ConfigDir + "/" + CognitoConfigFile)
 
 	cognitoIdentityProvider := cognitoidentityprovider.New(r.AwsSession)
 
