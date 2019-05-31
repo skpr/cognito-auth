@@ -1,4 +1,4 @@
-package awscredentials
+package aws
 
 import (
 	"github.com/pkg/errors"
@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// AwsCredentials type
-type AwsCredentials struct {
+// Credentials type
+type Credentials struct {
 	AccessKey       string    `yaml:"access_key"`
 	SecretAccessKey string    `yaml:"secret_access_key"`
 	SessionToken    string    `yaml:"session_token"`
@@ -18,34 +18,34 @@ type AwsCredentials struct {
 }
 
 // LoadFromFile loads aws credentials from a file.
-func LoadFromFile(file string) (AwsCredentials, error) {
+func LoadFromFile(file string) (Credentials, error) {
 
-	var credentials AwsCredentials
+	var credentials Credentials
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return AwsCredentials{}, errors.Wrap(err, "Credentials file does not exist")
+		return Credentials{}, errors.Wrap(err, "Credentials file does not exist")
 	}
 
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
-		return AwsCredentials{}, errors.Wrap(err, "Failed to read credentials file")
+		return Credentials{}, errors.Wrap(err, "Failed to read credentials file")
 	}
 
 	err = yaml.Unmarshal(data, &credentials)
 	if err != nil {
-		return AwsCredentials{}, errors.Wrap(err, "Failed to unmarshal credentials")
+		return Credentials{}, errors.Wrap(err, "Failed to unmarshal credentials")
 	}
 
 	err = credentials.Validate()
 	if err != nil {
-		return AwsCredentials{}, errors.Wrap(err, "Validation failed")
+		return Credentials{}, errors.Wrap(err, "Validation failed")
 	}
 
 	return credentials, nil
 }
 
 // SaveToFile saves aws credentials to a file.
-func SaveToFile(file string, credentials AwsCredentials) error {
+func SaveToFile(file string, credentials Credentials) error {
 	// Create parent directory if it doesn't exist.
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		dir := path.Dir(file)
@@ -76,7 +76,7 @@ func Delete(file string) error {
 }
 
 // Validate the aws credentials.
-func (c *AwsCredentials) Validate() error {
+func (c *Credentials) Validate() error {
 	if c.AccessKey == "" {
 		return errors.New("not found: access_key")
 	}
@@ -93,6 +93,6 @@ func (c *AwsCredentials) Validate() error {
 }
 
 // HasExpired checks if the credentials has expired
-func (c *AwsCredentials) HasExpired() bool {
+func (c *Credentials) HasExpired() bool {
 	return c.Expiry.Before(time.Now())
 }

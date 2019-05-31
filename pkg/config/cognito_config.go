@@ -1,4 +1,4 @@
-package cognitoconfig
+package config
 
 import (
 	"github.com/pkg/errors"

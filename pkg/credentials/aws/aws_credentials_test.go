@@ -1,6 +1,6 @@
 // +build unit
 
-package awscredentials
+package aws
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -12,16 +12,16 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 
 	expiry := time.Now().Add(time.Duration(4000 * time.Second)).Truncate(time.Duration(time.Second))
 
-	credentials := AwsCredentials{
+	credentials := Credentials{
 		AccessKey:       "ABCDEFGHIJKLMNOP",
 		SecretAccessKey: "ABCDEFGHIJKLMNOP1234567890",
 		SessionToken:    "1234567890ABCDEFGHIJKLMNOPQRSTU:VWXYZ|}{)(*&^%$#@!",
 		Expiry:          expiry,
 	}
-	err := SaveToFile("/tmp/skpr/awscredentials.yml", credentials)
+	err := SaveToFile("/tmp/skpr/credentials.yml", credentials)
 	assert.Nil(t, err)
 
-	credentials, err = LoadFromFile("/tmp/skpr/awscredentials.yml")
+	credentials, err = LoadFromFile("/tmp/skpr/credentials.yml")
 	assert.Nil(t, err)
 	assert.Equal(t, "ABCDEFGHIJKLMNOP", AccessKey, "access_key was set")
 	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", SecretAccessKey, "secret_access_key was set")
@@ -34,7 +34,7 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 func TestHasExpired(t *testing.T) {
 	expiry := time.Now().Add(time.Duration(-4000 * time.Second)).Truncate(time.Duration(time.Second))
 
-	credentials := AwsCredentials{
+	credentials := Credentials{
 		AccessKey:       "ABCDEFGHIJKLMNOP",
 		SecretAccessKey: "ABCDEFGHIJKLMNOP1234567890",
 		SessionToken:    "1234567890ABCDEFGHIJKLMNOPQRSTU:VWXYZ|}{)(*&^%$#@!",

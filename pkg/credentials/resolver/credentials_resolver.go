@@ -1,33 +1,33 @@
-package credentialsresolver
+package resolver
 
 import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/awscredentials"
-	"github.com/skpr/cognito-auth/pkg/cognitoconfig"
-	"github.com/skpr/cognito-auth/pkg/oauthtokens"
+	"github.com/skpr/cognito-auth/pkg/config"
+	"github.com/skpr/cognito-auth/pkg/credentials/aws"
+	"github.com/skpr/cognito-auth/pkg/credentials/oauthtokens"
 	"time"
 )
 
 // Constants
 const (
-	AwsCredentialsFile = "awscredentials.yml"
+	AwsCredentialsFile = "credentials.yml"
 	OAuthTokensFile    = "oauthtokens.yml"
-	CognitoConfigFile  = "cognitoconfig.yml"
+	CognitoConfigFile  = "config.yml"
 )
 
 // CredentialsResolver type
 type CredentialsResolver struct {
 	ConfigDir     string
 	AwsSession    client.ConfigProvider
-	CognitoConfig cognitoconfig.CognitoConfig
+	CognitoConfig config.CognitoConfig
 }
 
 // New creates a new credentials resolver.
 func New(configDir string, sess client.ConfigProvider) (CredentialsResolver, error) {
-	cognitoConfig, err := cognitoconfig.LoadFromFile(configDir + "/" + CognitoConfigFile)
+	cognitoConfig, err := config.LoadFromFile(configDir + "/" + CognitoConfigFile)
 	if err != nil {
 		return CredentialsResolver{}, errors.Wrap(err, "Failed to load cognito config")
 	}
@@ -39,7 +39,7 @@ func New(configDir string, sess client.ConfigProvider) (CredentialsResolver, err
 }
 
 // Login logs in a user with username and password.
-func (r *CredentialsResolver) Login(username string, password string) (awscredentials.AwsCredentials, error) {
+func (r *CredentialsResolver) Login(username string, password string) (aws.Credentials, error) {
 
 	cognitoIdentityProvider := cognitoidentityprovider.New(r.AwsSession)
 
@@ -53,13 +53,13 @@ func (r *CredentialsResolver) Login(username string, password string) (awscreden
 	})
 	authOutput, err := cognitoIdentityProvider.InitiateAuth(authInput)
 	if err != nil {
-		return awscredentials.AwsCredentials{}, errors.Wrap(err, "Failed to login to identity provider")
+		return aws.Credentials{}, errors.Wrap(err, "Failed to login to identity provider")
 	}
 
 	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
 	err = oauthtokens.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
 	if err != nil {
-		return awscredentials.AwsCredentials{}, errors.Wrap(err, "Could not save oauth tokens")
+		return aws.Credentials{}, errors.Wrap(err, "Could not save oauth tokens")
 	}
 
 	return r.getTempCredentialsForTokens(tokens)
@@ -82,7 +82,7 @@ func (r *CredentialsResolver) Logout() error {
 		return errors.Wrap(err, "Failed to sign out")
 	}
 
-	err = awscredentials.Delete(r.ConfigDir+"/"+AwsCredentialsFile)
+	err = aws.Delete(r.ConfigDir+"/"+AwsCredentialsFile)
 	if err != nil {
 		return err
 	}
@@ -95,29 +95,29 @@ func (r *CredentialsResolver) Logout() error {
 }
 
 // GetAwsCredentials returns the AWS Credentials, refreshing if expired.
-func (r *CredentialsResolver) GetAwsCredentials() (awscredentials.AwsCredentials, error) {
+func (r *CredentialsResolver) GetAwsCredentials() (aws.Credentials, error) {
 
 	credentialsFile := r.ConfigDir + "/" + AwsCredentialsFile
-	creds, err := awscredentials.LoadFromFile(credentialsFile)
+	creds, err := aws.LoadFromFile(credentialsFile)
 	if err != nil {
-		return awscredentials.AwsCredentials{}, errors.Wrap(err, "Could not load aws credentials")
+		return aws.Credentials{}, errors.Wrap(err, "Could not load aws credentials")
 	}
 	if creds.HasExpired() {
 		creds, err = r.refreshAwsCredentials()
 	}
 	if err != nil {
-		return awscredentials.AwsCredentials{}, errors.Wrap(err, "Could not refresh aws credentials")
+		return aws.Credentials{}, errors.Wrap(err, "Could not refresh aws credentials")
 	}
 
 	return creds, nil
 }
 
 // refreshAwsCredentials refreshes the AWS credentials.
-func (r *CredentialsResolver) refreshAwsCredentials() (awscredentials.AwsCredentials, error) {
+func (r *CredentialsResolver) refreshAwsCredentials() (aws.Credentials, error) {
 
 	tokens, err := r.getOAuthTokens()
 	if err != nil {
-		return awscredentials.AwsCredentials{}, errors.Wrap(err, "Failed to load oauth tokens")
+		return aws.Credentials{}, errors.Wrap(err, "Failed to load oauth tokens")
 	}
 
 	return r.getTempCredentialsForTokens(tokens)
@@ -125,7 +125,7 @@ func (r *CredentialsResolver) refreshAwsCredentials() (awscredentials.AwsCredent
 }
 
 // getTempCredentialsForTokens gets the temporary STS AWS credentials for the oauth tokens, and saves them.
-func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauthtokens.OAuthTokens) (awscredentials.AwsCredentials, error) {
+func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauthtokens.OAuthTokens) (aws.Credentials, error) {
 	identityService := cognitoidentity.New(r.AwsSession)
 
 	logins := map[string]*string{
@@ -136,7 +136,7 @@ func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauthtokens.OAu
 		Logins:         logins,
 	})
 	if err != nil {
-		return awscredentials.AwsCredentials{}, errors.Wrap(err, "Failed to get cognito user id")
+		return aws.Credentials{}, errors.Wrap(err, "Failed to get cognito user id")
 	}
 
 	credsOutput, err := identityService.GetCredentialsForIdentity(&cognitoidentity.GetCredentialsForIdentityInput{
@@ -144,19 +144,19 @@ func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauthtokens.OAu
 		Logins:     logins,
 	})
 	if err != nil {
-		return awscredentials.AwsCredentials{}, errors.Wrap(err, "Failed to get credentials for user id")
+		return aws.Credentials{}, errors.Wrap(err, "Failed to get credentials for user id")
 	}
 
-	credentials := awscredentials.AwsCredentials{
+	credentials := aws.Credentials{
 		AccessKey:       *credsOutput.Credentials.AccessKeyId,
 		SecretAccessKey: *credsOutput.Credentials.SecretKey,
 		SessionToken:    *credsOutput.Credentials.SessionToken,
 		Expiry:          *credsOutput.Credentials.Expiration,
 	}
 
-	err = awscredentials.SaveToFile(r.ConfigDir+"/"+AwsCredentialsFile, credentials)
+	err = aws.SaveToFile(r.ConfigDir+"/"+AwsCredentialsFile, credentials)
 	if err != nil {
-		return awscredentials.AwsCredentials{}, errors.Wrap(err, "Failed to save credentials to file")
+		return aws.Credentials{}, errors.Wrap(err, "Failed to save credentials to file")
 	}
 
 	return credentials, nil
@@ -182,7 +182,7 @@ func (r *CredentialsResolver) getOAuthTokens() (oauthtokens.OAuthTokens, error) 
 // refreshOAuthTokens refreshes the oauth tokens, and saves them to file.
 func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauthtokens.OAuthTokens) (oauthtokens.OAuthTokens, error) {
 
-	cognitoConfig, err := cognitoconfig.LoadFromFile(r.ConfigDir + "/" + CognitoConfigFile)
+	cognitoConfig, err := config.LoadFromFile(r.ConfigDir + "/" + CognitoConfigFile)
 
 	cognitoIdentityProvider := cognitoidentityprovider.New(r.AwsSession)
 

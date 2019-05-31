@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/credentialsresolver"
+	"github.com/skpr/cognito-auth/pkg/credentials/resolver"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,11 +13,11 @@ import (
 
 // ConsoleSignin type
 type ConsoleSignin struct {
-	CredentialsResolver credentialsresolver.CredentialsResolver
+	CredentialsResolver resolver.CredentialsResolver
 }
 
 // New creates a new credentials resolver.
-func New(resolver credentialsresolver.CredentialsResolver) (ConsoleSignin, error) {
+func New(resolver resolver.CredentialsResolver) (ConsoleSignin, error) {
 	return ConsoleSignin{
 		CredentialsResolver: resolver,
 	}, nil

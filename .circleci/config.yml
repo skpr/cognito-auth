@@ -55,8 +55,3 @@ workflows:
             - lint_test
           filters:
             <<: *filters_release
-      - release_docker:
-          requires:
-            - lint_test
-          filters:
-            <<: *filters_release
