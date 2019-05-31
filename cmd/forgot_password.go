@@ -1,39 +1,88 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/skpr/cognito-auth/pkg/credentials/forgot"
+	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
+	"strings"
+	"syscall"
 )
 
 type cmdForgotPassword struct {
-	Username string
-	Password string
-	ClientID string
+	Username  string
+	ClientID  string
+	ConfigDir string
+	Region    string
 }
 
 func (v *cmdForgotPassword) run(c *kingpin.ParseContext) error {
-	sess, err := session.NewSession()
-	if err != nil {
-		fmt.Println(err)
-	}
-	svc := cognitoidentityprovider.New(sess, aws.NewConfig().WithRegion("ap-southeast-2"))
 
-	forgotPasswordInput := new(cognitoidentityprovider.ForgotPasswordInput)
-	forgotPasswordInput.SetClientId(v.ClientID)
-	forgotPasswordInput.SetUsername(v.Username)
-
-	forgotPasswordOutput, err := svc.ForgotPassword(forgotPasswordInput)
-
+	config := aws.NewConfig().WithRegion(v.Region)
+	sess, err := session.NewSession(config)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	fmt.Println(forgotPasswordOutput.String())
+	f, err := forgot.New(v.ConfigDir, sess)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Are you sure you want to reset the password for ", v.Username, "? [y/n] ")
+	text, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	text = strings.TrimSpace(text)
+
+	if !strings.ContainsAny(text, "yY") {
+		os.Exit(0)
+	}
+
+	err = f.InitResetPassword(v.Username)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Print("Enter the confirmation code: ")
+
+	code, _ := reader.ReadString('\n')
+	code = strings.TrimSpace(code)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Failed to read code")
+		os.Exit(1)
+	}
+
+	fmt.Print("Enter the new password: ")
+	bytecode, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Failed to read password")
+		os.Exit(1)
+	}
+	password := string(bytecode)
+	password = strings.TrimSpace(password)
+
+	err = f.ConfirmResetPassword(v.Username, password, code)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Failed to update password")
+		os.Exit(1)
+	}
+
+	fmt.Println("Password successfully updated")
 
 	return nil
 }
@@ -42,8 +91,13 @@ func (v *cmdForgotPassword) run(c *kingpin.ParseContext) error {
 func ForgotPassword(app *kingpin.Application) {
 	v := new(cmdForgotPassword)
 
-	command := app.Command("forgot-password", "Starts the forgot password process.").Action(v.run)
-	//clientSecret = command.Flag("client-secret", "ClientId for authentication").Required().Envar("SKPR_CLIENT_SECRET").String()
-	command.Flag("client-id", "ClientId for reset").Required().StringVar(&v.ClientID)
-	command.Flag("username", "Access token for change password").Required().StringVar(&v.Username)
+	command := app.Command("reset-password", "Starts the reset password process.").Action(v.run)
+	command.Flag("username", "The username").Required().StringVar(&v.Username)
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println(err)
+	}
+	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/skpr").StringVar(&v.ConfigDir)
+	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
 }
