@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/previousnext/login/cmd"
+	"github.com/skpr/cognito-auth/cmd"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 )
 
 func main() {
 
-	app := kingpin.New("login", "Example Cognito CLI login.")
+	app := kingpin.New("auth", "Example Cognito CLI login.")
 
 	cmd.Login(app)
 	cmd.Logout(app)

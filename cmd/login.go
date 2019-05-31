@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/previousnext/login/pkg/credentials_resolver"
+	"github.com/skpr/cognito-auth/pkg/credentials_resolver"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 )

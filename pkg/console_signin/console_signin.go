@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/previousnext/login/pkg/credentials_resolver"
+	"github.com/skpr/cognito-auth/pkg/credentials_resolver"
 	"io/ioutil"
 	"net/http"
 	"net/url"

@@ -2,7 +2,7 @@
 
 export CGO_ENABLED=0
 
-PROJECT=github.com/previousnext/login
+PROJECT=github.com/skpr/cognito-auth
 VERSION=$(shell git describe --tags --always)
 COMMIT=$(shell git rev-list -1 HEAD)
 
@@ -11,7 +11,7 @@ build:
 	gox -os='linux darwin' \
 	    -arch='amd64' \
 	    -output='bin/login_{{.OS}}_{{.Arch}}' \
-	    -ldflags='-extldflags "-static" -X github.com/previousnext/login/cmd.GitVersion=${VERSION} -X github.com/previousnext/login/cmd.GitCommit=${COMMIT}' \
+	    -ldflags='-extldflags "-static" -X github.com/skpr/cognito-auth/cmd.GitVersion=${VERSION} -X github.com/skpr/cognito-auth/cmd.GitCommit=${COMMIT}' \
 	    $(PROJECT)
 
 # Run all lint checking with exit codes for CI.
@@ -22,7 +22,7 @@ lint:
 test:
 	go test -cover ./...
 
-IMAGE=previousnext/login
+IMAGE=skpr/cognito-auth
 
 # Releases the project Docker Hub.
 release-docker:
