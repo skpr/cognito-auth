@@ -1,4 +1,4 @@
-package cognito_config
+package cognitoconfig
 
 import (
 	"github.com/pkg/errors"
@@ -7,13 +7,14 @@ import (
 	"os"
 )
 
+// CognitoConfig type
 type CognitoConfig struct {
 	ClientID       string `yaml:"client_id"`
 	IdentityPoolID string `yaml:"identity_pool_id"`
 	UserPoolID     string `yaml:"user_pool_id"`
 }
 
-// Load aws credentials from a file.
+// LoadFromFile load aws credentials from a file.
 func LoadFromFile(file string) (CognitoConfig, error) {
 
 	var config CognitoConfig

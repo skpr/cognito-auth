@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/skpr/cognito-auth/pkg/credentials_resolver"
+	"github.com/skpr/cognito-auth/pkg/credentialsresolver"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 )
@@ -21,7 +21,7 @@ func (v *cmdLogout) run(c *kingpin.ParseContext) error {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	resolver, err := credentials_resolver.New(v.ConfigDir, sess)
+	resolver, err := credentialsresolver.New(v.ConfigDir, sess)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -37,7 +37,7 @@ func (v *cmdLogout) run(c *kingpin.ParseContext) error {
 	return nil
 }
 
-// Login sub-command.
+// Logout sub-command.
 func Logout(app *kingpin.Application) {
 	v := new(cmdLogout)
 

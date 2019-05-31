@@ -3,8 +3,8 @@ version: 2
 jobs:
   lint_test:
     docker:
-      - image: previousnext/golang:1.9
-    working_directory: /go/src/github.com/previousnext/gopher
+      - image: previousnext/golang:1.12
+    working_directory: /go/src/github.com/skpr/cognito-auth
     environment:
       TEST_RESULTS: /tmp/test-results
     steps:
@@ -23,23 +23,10 @@ jobs:
           destination: raw-test-output
       - store_test_results:
           path: /tmp/test-results
-  release_docker:
-    docker:
-      - image: previousnext/pnx-packager
-    working_directory: /go/src/github.com/previousnext/gopher
-    steps:
-      - checkout
-      - setup_remote_docker:
-          version: 17.07.0-ce
-      - run:
-          name: Build container image and push to dockerhub.
-          command: |
-            docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-            make release-docker
   release_github:
     docker:
       - image: previousnext/golang:1.9
-    working_directory: /go/src/github.com/previousnext/gopher
+    working_directory: /go/src/github.com/skpr/cognito-auth
     steps:
       - checkout
       - run:

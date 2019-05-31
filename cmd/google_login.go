@@ -34,10 +34,10 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 		Endpoint:     google.Endpoint,
 	}
 
-	authUrl := googleOauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline)
+	authURL := googleOauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline)
 
 	fmt.Println("Please login with the following link:")
-	fmt.Println(authUrl)
+	fmt.Println(authURL)
 	fmt.Println("Then paste your authentication code:")
 	bytecode, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
@@ -113,7 +113,7 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 	return nil
 }
 
-// Login sub-command.
+// GoogleLogin sub-command.
 func GoogleLogin(app *kingpin.Application) {
 	v := new(cmdGoogleLogin)
 

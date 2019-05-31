@@ -1,4 +1,4 @@
-package oauth_tokens
+package oauthtokens
 
 import (
 	"github.com/pkg/errors"
@@ -9,14 +9,15 @@ import (
 	"time"
 )
 
+// OAuthTokens type
 type OAuthTokens struct {
 	AccessToken  string    `yaml:"access_token"`
 	RefreshToken string    `yaml:"refresh_token"`
-	IdToken      string    `yaml:"id_token"`
+	IDToken      string    `yaml:"id_token"`
 	Expiry       time.Time `yaml:"expiry"`
 }
 
-// ReadFromFile will return the oauth token from a file.
+// LoadFromFile will return the oauth token from a file.
 func LoadFromFile(filename string) (OAuthTokens, error) {
 
 	var token OAuthTokens
@@ -43,7 +44,7 @@ func LoadFromFile(filename string) (OAuthTokens, error) {
 	return token, nil
 }
 
-// WriteToFile writes an oauth token to file
+// SaveToFile writes an oauth token to file
 func SaveToFile(filename string, token OAuthTokens) error {
 
 	// Create parent directory if it doesn't exist.
@@ -68,7 +69,7 @@ func SaveToFile(filename string, token OAuthTokens) error {
 	return nil
 }
 
-// Deletes the tokens file.
+// Delete the tokens file.
 func Delete(file string) error {
 	err := os.Remove(file)
 	if err != nil {
@@ -87,14 +88,14 @@ func (c *OAuthTokens) Validate() error {
 		return errors.New("not found: refresh_token")
 	}
 
-	if c.IdToken == "" {
+	if c.IDToken == "" {
 		return errors.New("not found: id_token")
 	}
 
 	return nil
 }
 
-// Check if the token has expired.
+// HasExpired checks if the token has expired.
 func (c *OAuthTokens) HasExpired() bool {
 	return c.Expiry.Before(time.Now())
 }

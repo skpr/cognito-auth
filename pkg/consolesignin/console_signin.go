@@ -1,28 +1,29 @@
-package console_signin
+package consolesignin
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/credentials_resolver"
+	"github.com/skpr/cognito-auth/pkg/credentialsresolver"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 )
 
+// ConsoleSignin type
 type ConsoleSignin struct {
-	CredentialsResolver credentials_resolver.CredentialsResolver
+	CredentialsResolver credentialsresolver.CredentialsResolver
 }
 
-// Creates a new credentials resolver.
-func New(resolver credentials_resolver.CredentialsResolver) (ConsoleSignin, error) {
+// New creates a new credentials resolver.
+func New(resolver credentialsresolver.CredentialsResolver) (ConsoleSignin, error) {
 	return ConsoleSignin{
 		CredentialsResolver: resolver,
 	}, nil
 }
 
-// Gets the federated console sign in link.
+// GetSignInLink gets the federated console sign in link.
 func (c *ConsoleSignin) GetSignInLink() (string, error) {
 
 	creds, err := c.CredentialsResolver.GetAwsCredentials()
@@ -31,7 +32,7 @@ func (c *ConsoleSignin) GetSignInLink() (string, error) {
 	}
 
 	// Get console federated login link
-	federationUrl := url.URL{
+	federationURL := url.URL{
 		Scheme: "https",
 		Host:   "signin.aws.amazon.com",
 		Path:   "/federation",
@@ -44,13 +45,13 @@ func (c *ConsoleSignin) GetSignInLink() (string, error) {
 	}
 	jsonParams, _ := json.Marshal(sessionParams)
 
-	query := federationUrl.Query()
+	query := federationURL.Query()
 	query.Add("Action", "getSigninToken")
 	query.Add("SessionDuration", "43200")
 	query.Add("Session", string(jsonParams))
-	federationUrl.RawQuery = query.Encode()
+	federationURL.RawQuery = query.Encode()
 
-	response, err := http.Get(federationUrl.String())
+	response, err := http.Get(federationURL.String())
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -70,19 +71,19 @@ func (c *ConsoleSignin) GetSignInLink() (string, error) {
 
 	signInToken := data["SigninToken"]
 
-	federationUrl = url.URL{
+	federationURL = url.URL{
 		Scheme: "https",
 		Host:   "signin.aws.amazon.com",
 		Path:   "/federation",
 	}
 
-	query = federationUrl.Query()
+	query = federationURL.Query()
 	query.Add("Action", "login")
 	query.Add("Issuer", "login.test.skpr.io")
 	query.Add("Destination", "https://console.aws.amazon.com/cloudwatch")
 	query.Add("SigninToken", signInToken)
 
-	federationUrl.RawQuery = query.Encode()
+	federationURL.RawQuery = query.Encode()
 
-	return federationUrl.String(), nil
+	return federationURL.String(), nil
 }

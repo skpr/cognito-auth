@@ -24,15 +24,9 @@ test:
 
 IMAGE=skpr/cognito-auth
 
-# Releases the project Docker Hub.
-release-docker:
-	docker build -t ${IMAGE}:${VERSION} -t ${IMAGE}:latest .
-	docker push ${IMAGE}:${VERSION}
-	docker push ${IMAGE}:latest
-
 release-github: build
 	ghr -u previousnext "${VERSION}" ./bin/
 
-release: release-docker release-github
+release: release-github
 
 .PHONY: build lint test release-docker release-github release

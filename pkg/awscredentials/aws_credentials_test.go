@@ -1,6 +1,6 @@
 // +build unit
 
-package aws_credentials
+package awscredentials
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -18,10 +18,10 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 		SessionToken:    "1234567890ABCDEFGHIJKLMNOPQRSTU:VWXYZ|}{)(*&^%$#@!",
 		Expiry:          expiry,
 	}
-	err := SaveToFile("/tmp/skpr/aws_credentials.yml", credentials)
+	err := SaveToFile("/tmp/skpr/awscredentials.yml", credentials)
 	assert.Nil(t, err)
 
-	credentials, err = LoadFromFile("/tmp/skpr/aws_credentials.yml")
+	credentials, err = LoadFromFile("/tmp/skpr/awscredentials.yml")
 	assert.Nil(t, err)
 	assert.Equal(t, "ABCDEFGHIJKLMNOP", AccessKey, "access_key was set")
 	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", SecretAccessKey, "secret_access_key was set")

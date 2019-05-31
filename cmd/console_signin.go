@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/skpr/cognito-auth/pkg/console_signin"
-	"github.com/skpr/cognito-auth/pkg/credentials_resolver"
+	"github.com/skpr/cognito-auth/pkg/consolesignin"
+	"github.com/skpr/cognito-auth/pkg/credentialsresolver"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 )
@@ -22,12 +22,12 @@ func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	resolver, err := credentials_resolver.New(v.ConfigDir, sess)
+	resolver, err := credentialsresolver.New(v.ConfigDir, sess)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	signin, err := console_signin.New(resolver)
+	signin, err := consolesignin.New(resolver)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -43,7 +43,7 @@ func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
 	return nil
 }
 
-// The console sign-in command.
+// ConsoleSignIn console sign-in command.
 func ConsoleSignIn(app *kingpin.Application) {
 	v := new(cmdConsoleSignIn)
 	command := app.Command("console-signin", "Generates a console sign-in link.").Action(v.run)
