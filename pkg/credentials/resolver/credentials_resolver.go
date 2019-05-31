@@ -39,7 +39,7 @@ func New(configDir string, sess client.ConfigProvider) (CredentialsResolver, err
 }
 
 // Login logs in a user with username and password.
-func (r *CredentialsResolver) Login(username string, password string) (aws.Credentials, error) {
+func (r *CredentialsResolver) Login(username string, password string) (aws.Credentials, aws.ChallengeResponse, error) {
 
 	cognitoIdentityProvider := cognitoidentityprovider.New(r.AwsSession)
 
@@ -53,17 +53,58 @@ func (r *CredentialsResolver) Login(username string, password string) (aws.Crede
 	})
 	authOutput, err := cognitoIdentityProvider.InitiateAuth(authInput)
 	if err != nil {
-		return aws.Credentials{}, errors.Wrap(err, "Failed to login to identity provider")
+		return aws.Credentials{}, aws.ChallengeResponse{}, errors.Wrap(err, "Failed to login to identity provider")
+	}
+
+	if authOutput.ChallengeName != nil {
+		challenge := aws.ChallengeResponse{
+			Name:    *authOutput.ChallengeName,
+			Session: *authOutput.Session,
+		}
+		return aws.Credentials{}, challenge, nil
 	}
 
 	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
 	err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
 	if err != nil {
+		return aws.Credentials{}, aws.ChallengeResponse{}, errors.Wrap(err, "Could not save oauth tokens")
+	}
+
+	creds, err := r.getTempCredentialsForTokens(tokens)
+
+	return creds, aws.ChallengeResponse{}, err
+
+}
+
+// ChangePasswordChallenge responds to a change password challenge.
+func (r *CredentialsResolver) ChangePasswordChallenge(username string, password string, sess string) (aws.Credentials, error) {
+	cognitoIdentityProvider := cognitoidentityprovider.New(r.AwsSession)
+	challengeName := "NEW_PASSWORD_REQUIRED"
+	challengeResponses := map[string]*string{
+		"USERNAME":     &username,
+		"NEW_PASSWORD": &password,
+	}
+
+	input := cognitoidentityprovider.RespondToAuthChallengeInput{
+		ChallengeName:      &challengeName,
+		ClientId:           &r.CognitoConfig.ClientID,
+		Session:            &sess,
+		ChallengeResponses: challengeResponses,
+	}
+	output, err := cognitoIdentityProvider.RespondToAuthChallenge(&input)
+	if err != nil {
+		return aws.Credentials{}, errors.Wrap(err, "Password challenge failed")
+	}
+
+	tokens := r.extractTokensFromAuthResult(output.AuthenticationResult)
+	err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+	if err != nil {
 		return aws.Credentials{}, errors.Wrap(err, "Could not save oauth tokens")
 	}
 
-	return r.getTempCredentialsForTokens(tokens)
+	creds, err := r.getTempCredentialsForTokens(tokens)
 
+	return creds, err
 }
 
 // Logout logs out the current user.
@@ -82,11 +123,11 @@ func (r *CredentialsResolver) Logout() error {
 		return errors.Wrap(err, "Failed to sign out")
 	}
 
-	err = aws.Delete(r.ConfigDir+"/"+AwsCredentialsFile)
+	err = aws.Delete(r.ConfigDir + "/" + AwsCredentialsFile)
 	if err != nil {
 		return err
 	}
-	err = oauth.Delete(r.ConfigDir+"/"+OAuthTokensFile)
+	err = oauth.Delete(r.ConfigDir + "/" + OAuthTokensFile)
 	if err != nil {
 		return err
 	}

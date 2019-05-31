@@ -5,8 +5,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/skpr/cognito-auth/pkg/credentials/resolver"
+	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
+	"strings"
+	"syscall"
 )
 
 type cmdLogin struct {
@@ -30,10 +33,51 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		os.Exit(1)
 	}
 
-	creds, err := resolver.Login(v.Username, v.Password)
+	creds, challenge, err := resolver.Login(v.Username, v.Password)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	if challenge.Name == "NEW_PASSWORD_REQUIRED" {
+		fmt.Println("You are required to change your password.")
+		fmt.Print("Enter the new password: ")
+		bytecode, err := terminal.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("Failed to read password")
+			os.Exit(1)
+		}
+		password := string(bytecode)
+		password = strings.TrimSpace(password)
+
+		fmt.Println()
+		fmt.Print("Confirm the new password: ")
+		bytecode, err = terminal.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println()
+			fmt.Println("Failed to read password confirmation")
+			os.Exit(1)
+		}
+		confirmedPassword := string(bytecode)
+		confirmedPassword = strings.TrimSpace(confirmedPassword)
+
+		if password != confirmedPassword {
+			fmt.Println()
+			fmt.Println("Passwords do not match! Please try again.")
+			os.Exit(1)
+		}
+
+		creds, err = resolver.ChangePasswordChallenge(v.Username, password, challenge.Session)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Println()
+		fmt.Println("Successfully changed password.")
+
 	}
 
 	fmt.Println(creds)
