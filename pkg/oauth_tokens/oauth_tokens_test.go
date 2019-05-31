@@ -25,10 +25,10 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 	tokens, err = LoadFromFile("/tmp/skpr/oauth_tokens.yml")
 	assert.Nil(t, err)
 
-	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", tokens.AccessToken, "access_token was set")
-	assert.Equal(t, "ABCDEFGHIJKLMNOP", tokens.RefreshToken, "refresh_token was set")
-	assert.Equal(t, "0123456789ABCDEF", tokens.IdToken, "id_token was set")
-	assert.Equal(t, expiry, tokens.Expiry, "expiry was set")
+	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", AccessToken, "access_token was set")
+	assert.Equal(t, "ABCDEFGHIJKLMNOP", RefreshToken, "refresh_token was set")
+	assert.Equal(t, "0123456789ABCDEF", IdToken, "id_token was set")
+	assert.Equal(t, expiry, Expiry, "expiry was set")
 }
 
 func TestHasExpired(t *testing.T) {
@@ -40,5 +40,5 @@ func TestHasExpired(t *testing.T) {
 		Expiry:       expiry,
 	}
 
-	assert.True(t, tokens.HasExpired())
+	assert.True(t, HasExpired())
 }

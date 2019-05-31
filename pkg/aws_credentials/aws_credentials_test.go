@@ -23,11 +23,11 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 
 	credentials, err = LoadFromFile("/tmp/skpr/aws_credentials.yml")
 	assert.Nil(t, err)
-	assert.Equal(t, "ABCDEFGHIJKLMNOP", credentials.AccessKey, "access_key was set")
-	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", credentials.SecretAccessKey, "secret_access_key was set")
-	assert.Equal(t, "1234567890ABCDEFGHIJKLMNOPQRSTU:VWXYZ|}{)(*&^%$#@!", credentials.SessionToken, "session_token was set")
-	assert.Equal(t, expiry, credentials.Expiry, "expiry was set")
-	assert.False(t, credentials.HasExpired())
+	assert.Equal(t, "ABCDEFGHIJKLMNOP", AccessKey, "access_key was set")
+	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", SecretAccessKey, "secret_access_key was set")
+	assert.Equal(t, "1234567890ABCDEFGHIJKLMNOPQRSTU:VWXYZ|}{)(*&^%$#@!", SessionToken, "session_token was set")
+	assert.Equal(t, expiry, Expiry, "expiry was set")
+	assert.False(t, HasExpired())
 
 }
 
@@ -41,5 +41,5 @@ func TestHasExpired(t *testing.T) {
 		Expiry:          expiry,
 	}
 
-	assert.True(t, credentials.HasExpired())
+	assert.True(t, HasExpired())
 }

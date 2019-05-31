@@ -5,9 +5,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/credentials/aws_credentials"
-	"github.com/skpr/cognito-auth/pkg/credentials/cognito_config"
-	"github.com/skpr/cognito-auth/pkg/credentials/oauth_tokens"
+	"github.com/skpr/cognito-auth/pkg/aws_credentials"
+	"github.com/skpr/cognito-auth/pkg/cognito_config"
+	"github.com/skpr/cognito-auth/pkg/oauth_tokens"
 	"time"
 )
 
