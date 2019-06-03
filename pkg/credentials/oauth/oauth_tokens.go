@@ -17,16 +17,28 @@ type Tokens struct {
 	Expiry       time.Time `yaml:"expiry"`
 }
 
-// LoadFromFile will return the oauth token from a file.
-func LoadFromFile(filename string) (Tokens, error) {
+// TokensCache handles caching oauth2 tokens.
+type TokensCache struct {
+	filename string
+}
+
+// NewTokensCache creates a new instance.
+func NewTokensCache(filename string) TokensCache {
+	return TokensCache{
+		filename: filename,
+	}
+}
+
+// Get will return the oauth token from cache.
+func (c *TokensCache) Get() (Tokens, error) {
 
 	var token Tokens
 
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
+	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
 		return Tokens{}, errors.Wrap(err, "failed to load token")
 	}
 
-	data, err := ioutil.ReadFile(filename)
+	data, err := ioutil.ReadFile(c.filename)
 	if err != nil {
 		return Tokens{}, errors.Wrap(err, "failed to read token")
 	}
@@ -44,12 +56,12 @@ func LoadFromFile(filename string) (Tokens, error) {
 	return token, nil
 }
 
-// SaveToFile writes an oauth token to file
-func SaveToFile(filename string, token Tokens) error {
+// Put writes an oauth token to cache.
+func (c *TokensCache) Put (token Tokens) error {
 
 	// Create parent directory if it doesn't exist.
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		dir := path.Dir(filename)
+	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
+		dir := path.Dir(c.filename)
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create directory")
@@ -61,7 +73,7 @@ func SaveToFile(filename string, token Tokens) error {
 		return errors.Wrap(err, "failed to marshal tokens")
 	}
 
-	err = ioutil.WriteFile(filename, data, 0644)
+	err = ioutil.WriteFile(c.filename, data, 0644)
 	if err != nil {
 		return errors.Wrap(err, "failed to write tokens")
 	}
@@ -70,8 +82,8 @@ func SaveToFile(filename string, token Tokens) error {
 }
 
 // Delete the tokens file.
-func Delete(file string) error {
-	err := os.Remove(file)
+func (c *TokensCache) Delete() error {
+	err := os.Remove(c.filename)
 	if err != nil {
 		return errors.Wrap(err, "Failed to delete tokens file")
 	}

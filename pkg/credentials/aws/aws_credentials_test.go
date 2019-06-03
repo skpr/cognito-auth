@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestSaveAndLoadFromFile(t *testing.T) {
+func TestCredentialsCache(t *testing.T) {
 
 	expiry := time.Now().UTC().Add(time.Duration(4000 * time.Second)).Truncate(time.Duration(time.Second))
 
@@ -16,10 +16,11 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 		SessionToken:    "1234567890ABCDEFGHIJKLMNOPQRSTU:VWXYZ|}{)(*&^%$#@!",
 		Expiry:          expiry,
 	}
-	err := SaveToFile("/tmp/skpr/credentials.yml", credentials)
+	cache := NewCredentialsCache("/tmp/skpr/credentials.yml")
+	err := cache.Put(credentials)
 	assert.Nil(t, err)
 
-	credentials, err = LoadFromFile("/tmp/skpr/credentials.yml")
+	credentials, err = cache.Get()
 	assert.Nil(t, err)
 	assert.Equal(t, "ABCDEFGHIJKLMNOP", credentials.AccessKey, "access_key was set")
 	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", credentials.SecretAccessKey, "secret_access_key was set")

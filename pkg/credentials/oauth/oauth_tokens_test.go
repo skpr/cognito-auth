@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestSaveAndLoadFromFile(t *testing.T) {
+func TestTokensCache(t *testing.T) {
 
 	expiry := time.Now().UTC().Add(time.Duration(300 * time.Second)).Truncate(time.Duration(time.Second))
 
@@ -17,10 +17,11 @@ func TestSaveAndLoadFromFile(t *testing.T) {
 		Expiry:       expiry,
 	}
 
-	err := SaveToFile("/tmp/skpr/oauth.yml", tokens)
+	tokensCache := NewTokensCache("/tmp/skpr/oauth.yml")
+	err := tokensCache.Put(tokens)
 	assert.Nil(t, err)
 
-	tokens, err = LoadFromFile("/tmp/skpr/oauth.yml")
+	tokens, err = tokensCache.Get()
 	assert.Nil(t, err)
 
 	assert.Equal(t, "ABCDEFGHIJKLMNOP1234567890", tokens.AccessToken, "access_token was set")

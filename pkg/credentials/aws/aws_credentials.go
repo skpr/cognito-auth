@@ -17,16 +17,28 @@ type Credentials struct {
 	Expiry          time.Time `yaml:"expiry"`
 }
 
-// LoadFromFile loads aws credentials from a file.
-func LoadFromFile(file string) (Credentials, error) {
+// CredentialsCache handles getting and putting credentials from a cache
+type CredentialsCache struct {
+	filename string
+}
+
+// NewCredentialsCache creates a new instance
+func NewCredentialsCache(filename string) CredentialsCache {
+	return CredentialsCache{
+		filename: filename,
+	}
+}
+
+// Get loads aws credentials from cache.
+func (c *CredentialsCache) Get() (Credentials, error) {
 
 	var credentials Credentials
 
-	if _, err := os.Stat(file); os.IsNotExist(err) {
+	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
 		return Credentials{}, errors.Wrap(err, "Credentials file does not exist")
 	}
 
-	data, err := ioutil.ReadFile(file)
+	data, err := ioutil.ReadFile(c.filename)
 	if err != nil {
 		return Credentials{}, errors.Wrap(err, "Failed to read credentials file")
 	}
@@ -44,11 +56,11 @@ func LoadFromFile(file string) (Credentials, error) {
 	return credentials, nil
 }
 
-// SaveToFile saves aws credentials to a file.
-func SaveToFile(file string, credentials Credentials) error {
+// Put saves aws credentials to cache.
+func (c *CredentialsCache) Put(credentials Credentials) error {
 	// Create parent directory if it doesn't exist.
-	if _, err := os.Stat(file); os.IsNotExist(err) {
-		dir := path.Dir(file)
+	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
+		dir := path.Dir(c.filename)
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create directory")
@@ -59,16 +71,16 @@ func SaveToFile(file string, credentials Credentials) error {
 	if err != nil {
 		return errors.Wrap(err, "Failed to marshal credentials")
 	}
-	err = ioutil.WriteFile(file, credBytes, 0644)
+	err = ioutil.WriteFile(c.filename, credBytes, 0644)
 	if err != nil {
 		return errors.Wrap(err, "Failed to write credentials to file")
 	}
 	return nil
 }
 
-// Delete the credentials file.
-func Delete(file string) error {
-	err := os.Remove(file)
+// Delete the credentials from cache.
+func (c *CredentialsCache) Delete() error {
+	err := os.Remove(c.filename)
 	if err != nil {
 		return errors.Wrap(err, "Failed to delete credentials file")
 	}

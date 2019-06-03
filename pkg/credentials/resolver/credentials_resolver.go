@@ -65,7 +65,8 @@ func (r *CredentialsResolver) Login(username string, password string) (aws.Crede
 	}
 
 	tokens := r.extractTokensFromAuthResult(authOutput.AuthenticationResult)
-	err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+	tokensCache := oauth.NewTokensCache(r.ConfigDir+"/"+OAuthTokensFile)
+	err = tokensCache.Put(tokens)
 	if err != nil {
 		return aws.Credentials{}, aws.ChallengeResponse{}, errors.Wrap(err, "Could not save oauth tokens")
 	}
@@ -97,7 +98,8 @@ func (r *CredentialsResolver) ChangePasswordChallenge(username string, password 
 	}
 
 	tokens := r.extractTokensFromAuthResult(output.AuthenticationResult)
-	err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+	tokensCache := oauth.NewTokensCache(r.ConfigDir+"/"+OAuthTokensFile)
+	err = tokensCache.Put(tokens)
 	if err != nil {
 		return aws.Credentials{}, errors.Wrap(err, "Could not save oauth tokens")
 	}
@@ -123,11 +125,13 @@ func (r *CredentialsResolver) Logout() error {
 		return errors.Wrap(err, "Failed to sign out")
 	}
 
-	err = aws.Delete(r.ConfigDir + "/" + AwsCredentialsFile)
+	credentialsCache := aws.NewCredentialsCache(r.ConfigDir + "/" + AwsCredentialsFile)
+	err = credentialsCache.Delete()
 	if err != nil {
 		return err
 	}
-	err = oauth.Delete(r.ConfigDir + "/" + OAuthTokensFile)
+	tokensCache := oauth.NewTokensCache(r.ConfigDir+"/"+OAuthTokensFile)
+	err = tokensCache.Delete()
 	if err != nil {
 		return err
 	}
@@ -138,8 +142,8 @@ func (r *CredentialsResolver) Logout() error {
 // GetAwsCredentials returns the AWS Credentials, refreshing if expired.
 func (r *CredentialsResolver) GetAwsCredentials() (aws.Credentials, error) {
 
-	credentialsFile := r.ConfigDir + "/" + AwsCredentialsFile
-	creds, err := aws.LoadFromFile(credentialsFile)
+	credentialsCache := aws.NewCredentialsCache(r.ConfigDir + "/" + AwsCredentialsFile)
+	creds, err := credentialsCache.Get()
 	if err != nil {
 		return aws.Credentials{}, errors.Wrap(err, "Could not load aws credentials")
 	}
@@ -195,7 +199,8 @@ func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauth.Tokens) (
 		Expiry:          *credsOutput.Credentials.Expiration,
 	}
 
-	err = aws.SaveToFile(r.ConfigDir+"/"+AwsCredentialsFile, credentials)
+	credentialsCache := aws.NewCredentialsCache(r.ConfigDir + "/" + AwsCredentialsFile)
+	err = credentialsCache.Put(credentials)
 	if err != nil {
 		return aws.Credentials{}, errors.Wrap(err, "Failed to save credentials to file")
 	}
@@ -205,13 +210,14 @@ func (r *CredentialsResolver) getTempCredentialsForTokens(tokens oauth.Tokens) (
 
 // getOAuthTokens gets the OAuth2 tokens, refreshing if expired.
 func (r *CredentialsResolver) getOAuthTokens() (oauth.Tokens, error) {
-	tokens, err := oauth.LoadFromFile(r.ConfigDir + "/" + OAuthTokensFile)
+	tokensCache := oauth.NewTokensCache(r.ConfigDir+"/"+OAuthTokensFile)
+	tokens, err := tokensCache.Get()
 	if err != nil {
 		return oauth.Tokens{}, errors.Wrap(err, "Could not load oauth tokens")
 	}
 	if tokens.HasExpired() {
 		tokens, err = r.refreshOAuthTokens(tokens)
-		err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+		err = tokensCache.Put(tokens)
 		if err != nil {
 			return oauth.Tokens{}, errors.Wrap(err, "Could not save oauth tokens")
 		}
@@ -242,7 +248,8 @@ func (r *CredentialsResolver) refreshOAuthTokens(expiredTokens oauth.Tokens) (oa
 	// We don't get a refresh token for a refresh auth request, so add it back.
 	tokens.RefreshToken = expiredTokens.RefreshToken
 
-	err = oauth.SaveToFile(r.ConfigDir+"/"+OAuthTokensFile, tokens)
+	tokensCache := oauth.NewTokensCache(r.ConfigDir+"/"+OAuthTokensFile)
+	err = tokensCache.Put(tokens)
 	if err != nil {
 		return oauth.Tokens{}, errors.Wrap(err, "Failed to save oauth2 tokens")
 	}
