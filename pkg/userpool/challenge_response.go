@@ -1,4 +1,4 @@
-package aws
+package userpool
 
 // ChallengeResponse struct
 type ChallengeResponse struct {

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/config"
-	"github.com/skpr/cognito-auth/pkg/credentials/aws"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -14,12 +14,12 @@ import (
 
 // ConsoleSignin type
 type ConsoleSignin struct {
-	credentialsResolver aws.CredentialsResolver
+	credentialsResolver awscreds.CredentialsResolver
 	cognitoConfig       config.Config
 }
 
 // New creates a new credentials resolver.
-func New(cognitoConfig *config.Config, resolver *aws.CredentialsResolver) *ConsoleSignin {
+func New(cognitoConfig *config.Config, resolver *awscreds.CredentialsResolver) *ConsoleSignin {
 	return &ConsoleSignin{
 		credentialsResolver: *resolver,
 		cognitoConfig:       *cognitoConfig,

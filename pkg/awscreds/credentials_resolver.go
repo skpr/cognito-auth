@@ -1,4 +1,4 @@
-package aws
+package awscreds
 
 import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
@@ -30,13 +30,13 @@ func (r *CredentialsResolver) GetAwsCredentials() (Credentials, error) {
 
 	creds, err := r.credentialsCache.Get()
 	if err != nil {
-		return Credentials{}, errors.Wrap(err, "Could not load aws credentials")
+		return Credentials{}, errors.Wrap(err, "Could not load awscreds credentials")
 	}
 	if creds.HasExpired() {
 		creds, err = r.RefreshAwsCredentials()
 	}
 	if err != nil {
-		return Credentials{}, errors.Wrap(err, "Could not refresh aws credentials")
+		return Credentials{}, errors.Wrap(err, "Could not refresh awscreds credentials")
 	}
 
 	return creds, nil

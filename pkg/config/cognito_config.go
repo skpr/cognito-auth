@@ -19,7 +19,7 @@ type Config struct {
 	ConsoleIssuer      string `yaml:"console_issuer"`
 }
 
-// Load load aws credentials from a file.
+// Load load awscreds credentials from a file.
 func Load(configDir string) (Config, error) {
 	file := configDir + "/" + filename
 	var config Config
@@ -46,7 +46,7 @@ func Load(configDir string) (Config, error) {
 	return config, nil
 }
 
-// Validate the aws credentials.
+// Validate the awscreds credentials.
 func (c *Config) Validate() error {
 	if c.IdentityPoolID == "" {
 		return errors.New("not found: identity_pool")

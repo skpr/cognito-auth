@@ -5,7 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	awscredentials "github.com/skpr/cognito-auth/pkg/credentials/aws"
+	awscredentials "github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/oauth"
 	"github.com/skpr/cognito-auth/pkg/userpool"
 	"gopkg.in/alecthomas/kingpin.v2"

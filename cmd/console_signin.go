@@ -6,9 +6,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/consolesignin"
-	awscredentials "github.com/skpr/cognito-auth/pkg/credentials/aws"
 	"github.com/skpr/cognito-auth/pkg/oauth"
 	"github.com/skpr/cognito-auth/pkg/userpool"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -34,13 +34,13 @@ func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
 	}
 
 	tokensCache := oauth.NewTokensCache(v.CacheDir)
-	credentialsCache := awscredentials.NewCredentialsCache(v.CacheDir)
+	credentialsCache := awscreds.NewCredentialsCache(v.CacheDir)
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
 	cognitoIdentity := cognitoidentity.New(sess)
 	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokensCache, cognitoIdentityProvider)
 	tokensResolver := oauth.NewTokensResolver(tokensCache, tokensRefresher)
 
-	credentialsResolver := awscredentials.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
+	credentialsResolver := awscreds.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
 	signin := consolesignin.New(&cognitoConfig, credentialsResolver)
 
 	link, err := signin.GetSignInLink()

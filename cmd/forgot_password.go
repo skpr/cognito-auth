@@ -6,8 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	config2 "github.com/skpr/cognito-auth/pkg/config"
-	"github.com/skpr/cognito-auth/pkg/credentials/forgot"
+	"github.com/skpr/cognito-auth/pkg/config"
+	"github.com/skpr/cognito-auth/pkg/userpool"
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
@@ -24,21 +24,21 @@ type cmdResetPassword struct {
 
 func (v *cmdResetPassword) run(c *kingpin.ParseContext) error {
 
-	config := aws.NewConfig().WithRegion(v.Region)
-	sess, err := session.NewSession(config)
+	awsConfig := aws.NewConfig().WithRegion(v.Region)
+	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	cognitoConfig, err := config2.Load(v.ConfigDir)
+	cognitoConfig, err := config.Load(v.ConfigDir)
 	if err != nil {
 		return err
 	}
 
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
 
-	resetter := forgot.NewPasswordResetter(&cognitoConfig, cognitoIdentityProvider)
+	resetter := userpool.NewPasswordResetter(&cognitoConfig, cognitoIdentityProvider)
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Are you sure you want to reset the password for ", v.Username, "? [y/n] ")

@@ -1,4 +1,4 @@
-package aws
+package awscreds
 
 import (
 	"github.com/pkg/errors"
@@ -29,7 +29,7 @@ func NewCredentialsCache(filename string) *CredentialsCache {
 	}
 }
 
-// Get loads aws credentials from cache.
+// Get loads awscreds credentials from cache.
 func (c *CredentialsCache) Get() (Credentials, error) {
 
 	var credentials Credentials
@@ -56,7 +56,7 @@ func (c *CredentialsCache) Get() (Credentials, error) {
 	return credentials, nil
 }
 
-// Put saves aws credentials to cache.
+// Put saves awscreds credentials to cache.
 func (c *CredentialsCache) Put(credentials Credentials) error {
 	// Create parent directory if it doesn't exist.
 	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
@@ -87,7 +87,7 @@ func (c *CredentialsCache) Delete() error {
 	return nil
 }
 
-// Validate the aws credentials.
+// Validate the awscreds credentials.
 func (c *Credentials) Validate() error {
 	if c.AccessKey == "" {
 		return errors.New("not found: access_key")

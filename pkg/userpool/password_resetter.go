@@ -1,4 +1,4 @@
-package forgot
+package userpool
 
 import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"

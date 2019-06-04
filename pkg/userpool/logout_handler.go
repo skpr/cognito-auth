@@ -3,20 +3,20 @@ package userpool
 import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/credentials/aws"
+	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/oauth"
 )
 
 // LogoutHandler struct.
 type LogoutHandler struct {
-	credentialsCache        aws.CredentialsCache
+	credentialsCache        awscreds.CredentialsCache
 	tokensCache             oauth.TokensCache
 	tokensResolver          oauth.TokensResolver
 	cognitoIdentityProvider cognitoidentityprovider.CognitoIdentityProvider
 }
 
 // NewLogoutHandler creates a logout handler.
-func NewLogoutHandler(credentialsCache *aws.CredentialsCache, tokensCache *oauth.TokensCache, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider) *LogoutHandler {
+func NewLogoutHandler(credentialsCache *awscreds.CredentialsCache, tokensCache *oauth.TokensCache, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider) *LogoutHandler {
 	return &LogoutHandler{
 		credentialsCache:        *credentialsCache,
 		tokensCache:             *tokensCache,

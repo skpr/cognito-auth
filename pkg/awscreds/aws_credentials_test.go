@@ -1,4 +1,4 @@
-package aws
+package awscreds
 
 import (
 	"github.com/stretchr/testify/assert"
