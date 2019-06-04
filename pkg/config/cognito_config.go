@@ -1,4 +1,4 @@
-package cognito
+package config
 
 import (
 	"github.com/pkg/errors"
@@ -7,16 +7,21 @@ import (
 	"os"
 )
 
+// The config filename.
+const filename = "cognito_config.yml"
+
 // Config type
 type Config struct {
-	ClientID       string `yaml:"client_id"`
-	IdentityPoolID string `yaml:"identity_pool_id"`
-	UserPoolID     string `yaml:"user_pool_id"`
+	ClientID           string `yaml:"client_id"`
+	IdentityPoolID     string `yaml:"identity_pool_id"`
+	UserPoolID         string `yaml:"user_pool_id"`
+	ConsoleDestination string `yaml:"console_destination"`
+	ConsoleIssuer      string `yaml:"console_issuer"`
 }
 
-// LoadFromFile load aws credentials from a file.
-func LoadFromFile(file string) (Config, error) {
-
+// Load load awscreds credentials from a file.
+func Load(configDir string) (Config, error) {
+	file := configDir + "/" + filename
 	var config Config
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
@@ -41,7 +46,7 @@ func LoadFromFile(file string) (Config, error) {
 	return config, nil
 }
 
-// Validate the aws credentials.
+// Validate the awscreds credentials.
 func (c *Config) Validate() error {
 	if c.IdentityPoolID == "" {
 		return errors.New("not found: identity_pool")
@@ -53,6 +58,14 @@ func (c *Config) Validate() error {
 
 	if c.UserPoolID == "" {
 		return errors.New("not found: user_pool_id")
+	}
+
+	if c.ConsoleDestination == "" {
+		return errors.New("not found: console_destination")
+	}
+
+	if c.ConsoleIssuer == "" {
+		return errors.New("not found: console_issuer")
 	}
 
 	return nil

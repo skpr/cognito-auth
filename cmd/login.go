@@ -4,7 +4,12 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/skpr/cognito-auth/pkg/credentials/resolver"
+	"github.com/aws/aws-sdk-go/service/cognitoidentity"
+	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	awscredentials "github.com/skpr/cognito-auth/pkg/awscreds"
+	"github.com/skpr/cognito-auth/pkg/config"
+	"github.com/skpr/cognito-auth/pkg/oauth"
+	"github.com/skpr/cognito-auth/pkg/userpool"
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
@@ -16,27 +21,37 @@ type cmdLogin struct {
 	Username  string
 	Password  string
 	ConfigDir string
-	Region string
+	CacheDir  string
+	Region    string
 }
 
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 
-	config := aws.NewConfig().WithRegion(v.Region)
-	sess, err := session.NewSession(config)
+	awsConfig := aws.NewConfig().WithRegion(v.Region)
+	sess, err := session.NewSession(awsConfig)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	resolver, err := resolver.New(v.ConfigDir, sess)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
-	creds, challenge, err := resolver.Login(v.Username, v.Password)
+	cognitoConfig, err := config.Load(v.ConfigDir)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
+	}
+
+	tokensCache := oauth.NewTokensCache(v.CacheDir)
+	credentialsCache := awscredentials.NewCredentialsCache(v.CacheDir)
+
+	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
+	cognitoIdentity := cognitoidentity.New(sess)
+	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokensCache, cognitoIdentityProvider)
+	tokensResolver := oauth.NewTokensResolver(tokensCache, tokensRefresher)
+	credentialsResolver := awscredentials.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
+
+	loginHandler := userpool.NewLoginHandler(tokensCache, &cognitoConfig, cognitoIdentityProvider, credentialsResolver)
+
+	creds, challenge, err := loginHandler.Login(v.Username, v.Password)
+	if err != nil {
+		return err
 	}
 
 	if challenge.Name == "NEW_PASSWORD_REQUIRED" {
@@ -44,9 +59,8 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		fmt.Print("Enter the new password: ")
 		bytecode, err := terminal.ReadPassword(int(syscall.Stdin))
 		if err != nil {
-			fmt.Println(err)
 			fmt.Println("Failed to read password")
-			os.Exit(1)
+			return err
 		}
 		password := string(bytecode)
 		password = strings.TrimSpace(password)
@@ -55,10 +69,9 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		fmt.Print("Confirm the new password: ")
 		bytecode, err = terminal.ReadPassword(int(syscall.Stdin))
 		if err != nil {
-			fmt.Println(err)
 			fmt.Println()
 			fmt.Println("Failed to read password confirmation")
-			os.Exit(1)
+			return err
 		}
 		confirmedPassword := string(bytecode)
 		confirmedPassword = strings.TrimSpace(confirmedPassword)
@@ -66,13 +79,13 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		if password != confirmedPassword {
 			fmt.Println()
 			fmt.Println("Passwords do not match! Please try again.")
-			os.Exit(1)
+			return err
 		}
 
-		creds, err = resolver.ChangePasswordChallenge(v.Username, password, challenge.Session)
+		creds, err = loginHandler.ChangePasswordChallenge(v.Username, password, challenge.Session)
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
 		fmt.Println()
@@ -92,10 +105,9 @@ func Login(app *kingpin.Application) {
 	command := app.Command("login", "Logs in a user.").Action(v.run)
 	command.Flag("username", "Username for authentication").Required().StringVar(&v.Username)
 	command.Flag("password", "Password for authentication").Required().StringVar(&v.Password)
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Println(err)
-	}
-	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/skpr").StringVar(&v.ConfigDir)
+	homeDir, _ := os.UserHomeDir()
+	cacheDir, _ := os.UserCacheDir()
+	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/cognito-auth").StringVar(&v.ConfigDir)
+	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").StringVar(&v.CacheDir)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
 }
