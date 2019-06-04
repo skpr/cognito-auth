@@ -4,33 +4,35 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/skpr/cognito-auth/pkg/credentials/resolver"
+	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	awscredentials "github.com/skpr/cognito-auth/pkg/credentials/aws"
+	"github.com/skpr/cognito-auth/pkg/oauth"
+	"github.com/skpr/cognito-auth/pkg/userpool"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 )
 
 type cmdLogout struct {
 	ConfigDir string
-	Region string
+	CacheDir  string
+	Region    string
 }
 
 func (v *cmdLogout) run(c *kingpin.ParseContext) error {
 	config := aws.NewConfig().WithRegion(v.Region)
 	sess, err := session.NewSession(config)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
-	resolver, err := resolver.New(v.ConfigDir, sess)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	tokensCache := oauth.NewTokensCache(v.CacheDir)
+	credentialsCache := awscredentials.NewCredentialsCache(v.CacheDir)
+	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
 
-	err = resolver.Logout()
+	logoutHander := userpool.NewLogoutHandler(credentialsCache, tokensCache, cognitoIdentityProvider)
+
+	err = logoutHander.Logout()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	fmt.Println("You successfully logged out.")
@@ -42,10 +44,9 @@ func Logout(app *kingpin.Application) {
 	v := new(cmdLogout)
 
 	command := app.Command("logout", "Logs out a user.").Action(v.run)
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Println(err)
-	}
-	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/skpr").StringVar(&v.ConfigDir)
+	homeDir, _ := os.UserHomeDir()
+	cacheDir, _ := os.UserCacheDir()
+	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/cognito-auth").StringVar(&v.ConfigDir)
+	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").StringVar(&v.CacheDir)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
 }

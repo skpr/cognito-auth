@@ -6,16 +6,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"time"
 )
 
-// Tokens type
-type Tokens struct {
-	AccessToken  string    `yaml:"access_token"`
-	RefreshToken string    `yaml:"refresh_token"`
-	IDToken      string    `yaml:"id_token"`
-	Expiry       time.Time `yaml:"expiry"`
-}
+// Constants
+const (
+	filename = "oauth_tokens.yml"
+)
 
 // TokensCache handles caching oauth2 tokens.
 type TokensCache struct {
@@ -23,8 +19,9 @@ type TokensCache struct {
 }
 
 // NewTokensCache creates a new instance.
-func NewTokensCache(filename string) TokensCache {
-	return TokensCache{
+func NewTokensCache(cacheDir string) *TokensCache {
+	filename := cacheDir + filename
+	return &TokensCache{
 		filename: filename,
 	}
 }
@@ -32,32 +29,32 @@ func NewTokensCache(filename string) TokensCache {
 // Get will return the oauth token from cache.
 func (c *TokensCache) Get() (Tokens, error) {
 
-	var token Tokens
+	var tokens Tokens
 
 	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
-		return Tokens{}, errors.Wrap(err, "failed to load token")
+		return Tokens{}, errors.Wrap(err, "failed to load tokens")
 	}
 
 	data, err := ioutil.ReadFile(c.filename)
 	if err != nil {
-		return Tokens{}, errors.Wrap(err, "failed to read token")
+		return Tokens{}, errors.Wrap(err, "failed to read tokens")
 	}
 
-	err = yaml.Unmarshal(data, &token)
+	err = yaml.Unmarshal(data, &tokens)
 	if err != nil {
-		return Tokens{}, errors.Wrap(err, "failed to unmarshal token")
+		return Tokens{}, errors.Wrap(err, "failed to unmarshal tokens")
 	}
 
-	err = token.Validate()
+	err = tokens.Validate()
 	if err != nil {
 		return Tokens{}, errors.Wrap(err, "validation failed")
 	}
 
-	return token, nil
+	return tokens, nil
 }
 
 // Put writes an oauth token to cache.
-func (c *TokensCache) Put (token Tokens) error {
+func (c *TokensCache) Put(token Tokens) error {
 
 	// Create parent directory if it doesn't exist.
 	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
@@ -88,26 +85,4 @@ func (c *TokensCache) Delete() error {
 		return errors.Wrap(err, "Failed to delete tokens file")
 	}
 	return nil
-}
-
-// Validate the OAuth token file.
-func (c *Tokens) Validate() error {
-	if c.AccessToken == "" {
-		return errors.New("not found: access_token")
-	}
-
-	if c.RefreshToken == "" {
-		return errors.New("not found: refresh_token")
-	}
-
-	if c.IDToken == "" {
-		return errors.New("not found: id_token")
-	}
-
-	return nil
-}
-
-// HasExpired checks if the token has expired.
-func (c *Tokens) HasExpired() bool {
-	return c.Expiry.Before(time.Now())
 }

@@ -3,18 +3,18 @@ package identitypool
 import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/config/cognito"
+	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/credentials/aws"
 )
 
 // CognitoIdentityPoolHandler handles aws identity pool functions.
 type CognitoIdentityPoolHandler struct {
-	CognitoConfig cognito.Config
+	CognitoConfig          config.Config
 	CognitoIdentityService cognitoidentity.CognitoIdentity
 }
 
 // New creates a new instance.
-func New(cognitoConfig cognito.Config, identityService cognitoidentity.CognitoIdentity) (CognitoIdentityPoolHandler, error) {
+func New(cognitoConfig config.Config, identityService cognitoidentity.CognitoIdentity) (CognitoIdentityPoolHandler, error) {
 	return CognitoIdentityPoolHandler{
 		CognitoConfig: cognitoConfig,
 		CognitoIdentityService: identityService,

@@ -23,8 +23,8 @@ type CredentialsCache struct {
 }
 
 // NewCredentialsCache creates a new instance
-func NewCredentialsCache(filename string) CredentialsCache {
-	return CredentialsCache{
+func NewCredentialsCache(filename string) *CredentialsCache {
+	return &CredentialsCache{
 		filename: filename,
 	}
 }

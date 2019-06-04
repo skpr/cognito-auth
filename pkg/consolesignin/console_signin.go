@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/credentials/resolver"
+	"github.com/skpr/cognito-auth/pkg/config"
+	"github.com/skpr/cognito-auth/pkg/credentials/aws"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,20 +14,22 @@ import (
 
 // ConsoleSignin type
 type ConsoleSignin struct {
-	CredentialsResolver resolver.CredentialsResolver
+	credentialsResolver aws.CredentialsResolver
+	cognitoConfig       config.Config
 }
 
 // New creates a new credentials resolver.
-func New(resolver resolver.CredentialsResolver) (ConsoleSignin, error) {
-	return ConsoleSignin{
-		CredentialsResolver: resolver,
-	}, nil
+func New(cognitoConfig *config.Config, resolver *aws.CredentialsResolver) *ConsoleSignin {
+	return &ConsoleSignin{
+		credentialsResolver: *resolver,
+		cognitoConfig:       *cognitoConfig,
+	}
 }
 
 // GetSignInLink gets the federated console sign in link.
 func (c *ConsoleSignin) GetSignInLink() (string, error) {
 
-	creds, err := c.CredentialsResolver.GetAwsCredentials()
+	creds, err := c.credentialsResolver.GetAwsCredentials()
 	if err != nil {
 		return "", errors.Wrap(err, "Failed getting credentials")
 	}
@@ -79,8 +82,8 @@ func (c *ConsoleSignin) GetSignInLink() (string, error) {
 
 	query = federationURL.Query()
 	query.Add("Action", "login")
-	query.Add("Issuer", "login.test.skpr.io")
-	query.Add("Destination", "https://console.aws.amazon.com/cloudwatch")
+	query.Add("Issuer", c.cognitoConfig.ConsoleIssuer)
+	query.Add("Destination", c.cognitoConfig.ConsoleDestination)
 	query.Add("SigninToken", signInToken)
 
 	federationURL.RawQuery = query.Encode()
