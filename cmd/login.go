@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	awscredentials "github.com/skpr/cognito-auth/pkg/awscreds"
+	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/oauth"
 	"github.com/skpr/cognito-auth/pkg/userpool"
@@ -18,11 +18,11 @@ import (
 )
 
 type cmdLogin struct {
-	Username  string
-	Password  string
-	ConfigDir string
-	CacheDir  string
-	Region    string
+	Username   string
+	Password   string
+	ConfigFile string
+	CacheDir   string
+	Region     string
 }
 
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
@@ -33,19 +33,19 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		return err
 	}
 
-	cognitoConfig, err := config.Load(v.ConfigDir)
+	cognitoConfig, err := config.Load(v.ConfigFile)
 	if err != nil {
 		return err
 	}
 
 	tokensCache := oauth.NewTokensCache(v.CacheDir)
-	credentialsCache := awscredentials.NewCredentialsCache(v.CacheDir)
+	credentialsCache := awscreds.NewCredentialsCache(v.CacheDir)
 
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
 	cognitoIdentity := cognitoidentity.New(sess)
 	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokensCache, cognitoIdentityProvider)
 	tokensResolver := oauth.NewTokensResolver(tokensCache, tokensRefresher)
-	credentialsResolver := awscredentials.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
+	credentialsResolver := awscreds.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
 
 	loginHandler := userpool.NewLoginHandler(tokensCache, &cognitoConfig, cognitoIdentityProvider, credentialsResolver)
 
@@ -107,7 +107,7 @@ func Login(app *kingpin.Application) {
 	command.Flag("password", "Password for authentication").Required().StringVar(&v.Password)
 	homeDir, _ := os.UserHomeDir()
 	cacheDir, _ := os.UserCacheDir()
-	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/cognito-auth").StringVar(&v.ConfigDir)
+	command.Flag("config-file", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").StringVar(&v.ConfigFile)
 	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").StringVar(&v.CacheDir)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
 }

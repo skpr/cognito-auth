@@ -7,21 +7,18 @@ import (
 	"os"
 )
 
-// The config filename.
-const filename = "cognito_config.yml"
-
 // Config type
 type Config struct {
 	ClientID           string `yaml:"client_id"`
+	ClientSecret       string `yaml:"client_secret"`
 	IdentityPoolID     string `yaml:"identity_pool_id"`
-	UserPoolID         string `yaml:"user_pool_id"`
+	IdentityProviderID string `yaml:"identity_provider_id"`
 	ConsoleDestination string `yaml:"console_destination"`
 	ConsoleIssuer      string `yaml:"console_issuer"`
 }
 
 // Load load awscreds credentials from a file.
-func Load(configDir string) (Config, error) {
-	file := configDir + "/" + filename
+func Load(file string) (Config, error) {
 	var config Config
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
@@ -54,10 +51,6 @@ func (c *Config) Validate() error {
 
 	if c.ClientID == "" {
 		return errors.New("not found: client_id")
-	}
-
-	if c.UserPoolID == "" {
-		return errors.New("not found: user_pool_id")
 	}
 
 	if c.ConsoleDestination == "" {

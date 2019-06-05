@@ -1,40 +1,49 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
+	"github.com/skpr/cognito-auth/pkg/awscreds"
+	"github.com/skpr/cognito-auth/pkg/config"
+	"github.com/skpr/cognito-auth/pkg/googleauth"
+	"github.com/skpr/cognito-auth/pkg/oauth"
 	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"syscall"
 )
 
 type cmdGoogleLogin struct {
-	Email          string
-	ClientID       string
-	ClientSecret   string
-	IdentityPoolID string
-	Region         string
+	Email      string
+	ConfigFile string
+	CacheDir   string
+	Region     string
 }
 
 func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 
-	googleOauthConfig := &oauth2.Config{
-		RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
-		ClientID:     v.ClientID,
-		ClientSecret: v.ClientSecret,
-		Scopes:       []string{"openid email"},
-		Endpoint:     google.Endpoint,
+	awsConfig := aws.NewConfig().WithRegion(v.Region)
+	sess, err := session.NewSession(awsConfig)
+	if err != nil {
+		return err
 	}
 
-	authURL := googleOauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline)
+	cognitoConfig, err := config.Load(v.ConfigFile)
+	if err != nil {
+		return err
+	}
+
+	tokensCache := oauth.NewTokensCache(v.CacheDir)
+	credentialsCache := awscreds.NewCredentialsCache(v.CacheDir)
+	cognitoIdentity := cognitoidentity.New(sess)
+	tokensRefresher := googleauth.NewTokensRefresher(&cognitoConfig, tokensCache)
+	tokensResolver := oauth.NewTokensResolver(tokensCache, tokensRefresher)
+	credentialsResolver := awscreds.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
+
+	loginHandler := googleauth.NewLoginHandler(&cognitoConfig, tokensCache, credentialsResolver)
+	authURL := loginHandler.GetAuthCodeURL()
 
 	fmt.Println("Please login with the following link:")
 	fmt.Println(authURL)
@@ -45,70 +54,9 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 	}
 	code := string(bytecode)
 
-	token, err := googleOauthConfig.Exchange(context.Background(), code)
-	if err != nil {
-		fmt.Println("Code exchange failed: ", err.Error())
-		os.Exit(1)
-	}
+	creds, err := loginHandler.Login(code)
 
-	fmt.Println("Refresh token: ", token.RefreshToken)
-	fmt.Println("Access token: ", token.AccessToken)
-	fmt.Println("Token type: ", token.TokenType)
-	fmt.Println("Expiry: ", token.Expiry.String())
-
-	// Extract the ID Token from OAuth2 token.
-	idToken, ok := token.Extra("id_token").(string)
-	if !ok {
-		fmt.Println("Missing id_token")
-		os.Exit(1)
-	}
-	fmt.Println("ID token: " + idToken)
-
-	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
-	if err != nil {
-		fmt.Println("Failed getting user info: ", err.Error())
-		os.Exit(1)
-	}
-	defer response.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		fmt.Println("Failed reading response body: ", err.Error())
-		os.Exit(1)
-	}
-	body := string(bodyBytes)
-	fmt.Println("User info: " + body)
-
-	sess, err := session.NewSession()
-	if err != nil {
-		fmt.Println(err)
-	}
-	config := aws.NewConfig().WithRegion(v.Region)
-
-	identityService := cognitoidentity.New(sess, config)
-
-	logins := map[string]*string{
-		"accounts.google.com": &idToken,
-	}
-	idOutput, err := identityService.GetId(&cognitoidentity.GetIdInput{
-		IdentityPoolId: &v.IdentityPoolID,
-		Logins:         logins,
-	})
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	fmt.Println(idOutput.String())
-
-	credsOutput, err := identityService.GetCredentialsForIdentity(&cognitoidentity.GetCredentialsForIdentityInput{
-		IdentityId: idOutput.IdentityId,
-		Logins:     logins,
-	})
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	fmt.Println(credsOutput.String())
+	fmt.Println(creds)
 
 	return nil
 }
@@ -117,10 +65,10 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 func GoogleLogin(app *kingpin.Application) {
 	v := new(cmdGoogleLogin)
 
-	command := app.Command("google-login", "Logs in a user.").Action(v.run)
-	command.Flag("email", "The user email").Required().StringVar(&v.Email)
-	command.Flag("client-id", "Client ID for authentication").Required().StringVar(&v.ClientID)
-	command.Flag("client-secret", "Client secret for authentication").Required().StringVar(&v.ClientSecret)
-	command.Flag("identity-pool-id", "The identity pool ID.").Required().StringVar(&v.IdentityPoolID)
+	command := app.Command("google-login", "Logs in a user using their google account.").Action(v.run)
+	homeDir, _ := os.UserHomeDir()
+	cacheDir, _ := os.UserCacheDir()
+	command.Flag("config-file", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").StringVar(&v.ConfigFile)
+	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").StringVar(&v.CacheDir)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
 }

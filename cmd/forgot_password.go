@@ -16,10 +16,10 @@ import (
 )
 
 type cmdResetPassword struct {
-	Username  string
-	ClientID  string
-	ConfigDir string
-	Region    string
+	Username   string
+	ClientID   string
+	ConfigFile string
+	Region     string
 }
 
 func (v *cmdResetPassword) run(c *kingpin.ParseContext) error {
@@ -31,7 +31,7 @@ func (v *cmdResetPassword) run(c *kingpin.ParseContext) error {
 		os.Exit(1)
 	}
 
-	cognitoConfig, err := config.Load(v.ConfigDir)
+	cognitoConfig, err := config.Load(v.ConfigFile)
 	if err != nil {
 		return err
 	}
@@ -125,6 +125,6 @@ func ResetPassword(app *kingpin.Application) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/skpr").StringVar(&v.ConfigDir)
+	command.Flag("config-file", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").StringVar(&v.ConfigFile)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
 }
