@@ -58,7 +58,7 @@ func (r *CredentialsResolver) RefreshAwsCredentials() (Credentials, error) {
 func (r *CredentialsResolver) GetTempCredentials(idToken string) (Credentials, error) {
 
 	logins := map[string]*string{
-		r.cognitoConfig.UserPoolID: &idToken,
+		r.cognitoConfig.IdentityProviderID: &idToken,
 	}
 	idOutput, err := r.cognitoIdentity.GetId(&cognitoidentity.GetIdInput{
 		IdentityPoolId: &r.cognitoConfig.IdentityPoolID,

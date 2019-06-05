@@ -13,9 +13,9 @@ import (
 )
 
 type cmdLogout struct {
-	ConfigDir string
-	CacheDir  string
-	Region    string
+	ConfigFile string
+	CacheDir   string
+	Region     string
 }
 
 func (v *cmdLogout) run(c *kingpin.ParseContext) error {
@@ -46,7 +46,7 @@ func Logout(app *kingpin.Application) {
 	command := app.Command("logout", "Logs out a user.").Action(v.run)
 	homeDir, _ := os.UserHomeDir()
 	cacheDir, _ := os.UserCacheDir()
-	command.Flag("config-dir", "The config directory to use.").Default(homeDir + "/.config/cognito-auth").StringVar(&v.ConfigDir)
+	command.Flag("config-file", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").StringVar(&v.ConfigFile)
 	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").StringVar(&v.CacheDir)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
 }

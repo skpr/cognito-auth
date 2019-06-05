@@ -20,7 +20,7 @@ type TokensCache struct {
 
 // NewTokensCache creates a new instance.
 func NewTokensCache(cacheDir string) *TokensCache {
-	filename := cacheDir + filename
+	filename := cacheDir + "/" + filename
 	return &TokensCache{
 		filename: filename,
 	}
