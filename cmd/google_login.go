@@ -68,7 +68,7 @@ func GoogleLogin(app *kingpin.Application) {
 	command := app.Command("google-login", "Logs in a user using their google account.").Action(v.run)
 	homeDir, _ := os.UserHomeDir()
 	cacheDir, _ := os.UserCacheDir()
-	command.Flag("config-file", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").StringVar(&v.ConfigFile)
-	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").StringVar(&v.CacheDir)
-	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
+	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
+	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").Envar("COGNITO_AUTH_CACHE_DIR").StringVar(&v.CacheDir)
+	command.Flag("region", "The AWS region").Default("ap-southeast-2").Envar("COGNITO_AUTH_REGION").StringVar(&v.Region)
 }

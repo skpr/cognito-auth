@@ -109,7 +109,7 @@ func (v *cmdResetPassword) run(c *kingpin.ParseContext) error {
 	}
 
 	fmt.Println()
-	fmt.Println("Password successfully updated")
+	fmt.Println("Password successfully updated.")
 
 	return nil
 }
@@ -125,6 +125,6 @@ func ResetPassword(app *kingpin.Application) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	command.Flag("config-file", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").StringVar(&v.ConfigFile)
-	command.Flag("region", "The AWS region").Default("ap-southeast-2").StringVar(&v.Region)
+	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
+	command.Flag("region", "The AWS region").Default("ap-southeast-2").Envar("COGNITO_AUTH_REGION").StringVar(&v.Region)
 }
