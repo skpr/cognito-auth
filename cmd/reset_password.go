@@ -125,6 +125,6 @@ func ResetPassword(app *kingpin.Application) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
+	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/userpool.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").Envar("COGNITO_AUTH_REGION").StringVar(&v.Region)
 }

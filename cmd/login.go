@@ -27,6 +27,19 @@ type cmdLogin struct {
 
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 
+	password := v.Password
+	if password == "" {
+		fmt.Print("Password: ")
+		bytecode, err := terminal.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			fmt.Println("Failed to read password")
+			return err
+		}
+		password = string(bytecode)
+		password = strings.TrimSpace(password)
+		fmt.Println()
+	}
+
 	awsConfig := aws.NewConfig().WithRegion(v.Region)
 	sess, err := session.NewSession(awsConfig)
 	if err != nil {
@@ -49,7 +62,7 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 
 	loginHandler := userpool.NewLoginHandler(tokensCache, &cognitoConfig, cognitoIdentityProvider, credentialsResolver)
 
-	creds, challenge, err := loginHandler.Login(v.Username, v.Password)
+	creds, challenge, err := loginHandler.Login(v.Username, password)
 	if err != nil {
 		return err
 	}
@@ -62,8 +75,8 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 			fmt.Println("Failed to read password")
 			return err
 		}
-		password := string(bytecode)
-		password = strings.TrimSpace(password)
+		newPassword := string(bytecode)
+		newPassword = strings.TrimSpace(newPassword)
 
 		fmt.Println()
 		fmt.Print("Confirm the new password: ")
@@ -76,13 +89,13 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		confirmedPassword := string(bytecode)
 		confirmedPassword = strings.TrimSpace(confirmedPassword)
 
-		if password != confirmedPassword {
+		if newPassword != confirmedPassword {
 			fmt.Println()
 			fmt.Println("Passwords do not match! Please try again.")
 			return err
 		}
 
-		creds, err = loginHandler.ChangePasswordChallenge(v.Username, password, challenge.Session)
+		creds, err = loginHandler.ChangePasswordChallenge(v.Username, newPassword, challenge.Session)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -103,11 +116,12 @@ func Login(app *kingpin.Application) {
 	v := new(cmdLogin)
 
 	command := app.Command("login", "Logs in a user.").Action(v.run)
+
 	command.Flag("username", "Username for authentication").Required().StringVar(&v.Username)
-	command.Flag("password", "Password for authentication").Required().StringVar(&v.Password)
+	command.Flag("password", "Password for authentication").StringVar(&v.Password)
 	homeDir, _ := os.UserHomeDir()
 	cacheDir, _ := os.UserCacheDir()
-	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/cognito_config.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
+	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/userpool.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
 	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").Envar("COGNITO_AUTH_CACHE_DIR").StringVar(&v.CacheDir)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").Envar("COGNITO_AUTH_REGION").StringVar(&v.Region)
 }

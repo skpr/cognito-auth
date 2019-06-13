@@ -16,11 +16,12 @@ type LogoutHandler struct {
 }
 
 // NewLogoutHandler creates a logout handler.
-func NewLogoutHandler(credentialsCache *awscreds.CredentialsCache, tokensCache *oauth.TokensCache, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider) *LogoutHandler {
+func NewLogoutHandler(credentialsCache *awscreds.CredentialsCache, tokensCache *oauth.TokensCache, tokensResolver *oauth.TokensResolver, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider) *LogoutHandler {
 	return &LogoutHandler{
 		credentialsCache:        *credentialsCache,
 		tokensCache:             *tokensCache,
 		cognitoIdentityProvider: *cognitoIdentityProvider,
+		tokensResolver:          *tokensResolver,
 	}
 }
 

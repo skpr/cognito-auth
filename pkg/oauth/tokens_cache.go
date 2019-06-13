@@ -15,14 +15,14 @@ const (
 
 // TokensCache handles caching oauth2 tokens.
 type TokensCache struct {
-	filename string
+	cacheFile string
 }
 
 // NewTokensCache creates a new instance.
 func NewTokensCache(cacheDir string) *TokensCache {
-	filename := cacheDir + "/" + filename
+	f := cacheDir + "/" + filename
 	return &TokensCache{
-		filename: filename,
+		cacheFile: f,
 	}
 }
 
@@ -31,11 +31,11 @@ func (c *TokensCache) Get() (Tokens, error) {
 
 	var tokens Tokens
 
-	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
+	if _, err := os.Stat(c.cacheFile); os.IsNotExist(err) {
 		return Tokens{}, errors.Wrap(err, "failed to load tokens")
 	}
 
-	data, err := ioutil.ReadFile(c.filename)
+	data, err := ioutil.ReadFile(c.cacheFile)
 	if err != nil {
 		return Tokens{}, errors.Wrap(err, "failed to read tokens")
 	}
@@ -57,8 +57,8 @@ func (c *TokensCache) Get() (Tokens, error) {
 func (c *TokensCache) Put(token Tokens) error {
 
 	// Create parent directory if it doesn't exist.
-	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
-		dir := path.Dir(c.filename)
+	if _, err := os.Stat(c.cacheFile); os.IsNotExist(err) {
+		dir := path.Dir(c.cacheFile)
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create directory")
@@ -70,7 +70,7 @@ func (c *TokensCache) Put(token Tokens) error {
 		return errors.Wrap(err, "failed to marshal tokens")
 	}
 
-	err = ioutil.WriteFile(c.filename, data, 0644)
+	err = ioutil.WriteFile(c.cacheFile, data, 0644)
 	if err != nil {
 		return errors.Wrap(err, "failed to write tokens")
 	}
@@ -80,7 +80,7 @@ func (c *TokensCache) Put(token Tokens) error {
 
 // Delete the tokens file.
 func (c *TokensCache) Delete() error {
-	err := os.Remove(c.filename)
+	err := os.Remove(c.cacheFile)
 	if err != nil {
 		return errors.Wrap(err, "Failed to delete tokens file")
 	}
