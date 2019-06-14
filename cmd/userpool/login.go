@@ -1,4 +1,4 @@
-package cmd
+package userpool
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/pkg/errors"
 	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/oauth"
@@ -37,6 +38,9 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		}
 		password = string(bytecode)
 		password = strings.TrimSpace(password)
+		if password == "" {
+			return errors.New("Password is required")
+		}
 		fmt.Println()
 	}
 
@@ -112,10 +116,10 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 }
 
 // Login sub-command.
-func Login(app *kingpin.Application) {
+func Login(c *kingpin.CmdClause) {
 	v := new(cmdLogin)
 
-	command := app.Command("login", "Logs in a user.").Action(v.run)
+	command := c.Command("login", "Logs in a user to a Cognito Userpool.").Action(v.run)
 
 	command.Flag("username", "Username for authentication").Required().StringVar(&v.Username)
 	command.Flag("password", "Password for authentication").StringVar(&v.Password)

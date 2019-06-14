@@ -1,4 +1,4 @@
-package cmd
+package userpool
 
 import (
 	"bufio"
@@ -115,10 +115,10 @@ func (v *cmdResetPassword) run(c *kingpin.ParseContext) error {
 }
 
 // ResetPassword sub-command.
-func ResetPassword(app *kingpin.Application) {
+func ResetPassword(c *kingpin.CmdClause) {
 	v := new(cmdResetPassword)
 
-	command := app.Command("reset-password", "Starts the reset password process.").Action(v.run)
+	command := c.Command("reset-password", "Resets a users Cognito Userpool password.").Action(v.run)
 	command.Flag("username", "The username").Required().StringVar(&v.Username)
 
 	homeDir, err := os.UserHomeDir()

@@ -1,4 +1,4 @@
-package cmd
+package userpool
 
 import (
 	"fmt"
@@ -49,10 +49,10 @@ func (v *cmdLogout) run(c *kingpin.ParseContext) error {
 }
 
 // Logout sub-command.
-func Logout(app *kingpin.Application) {
+func Logout(c *kingpin.CmdClause) {
 	v := new(cmdLogout)
 
-	command := app.Command("logout", "Logs out a user.").Action(v.run)
+	command := c.Command("logout", "Logs out a user from a Cognito Userpool").Action(v.run)
 	homeDir, _ := os.UserHomeDir()
 	cacheDir, _ := os.UserCacheDir()
 	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/userpool.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)

@@ -1,4 +1,4 @@
-package cmd
+package google
 
 import (
 	"fmt"
@@ -15,14 +15,14 @@ import (
 	"syscall"
 )
 
-type cmdGoogleLogin struct {
+type cmdLogin struct {
 	Email      string
 	ConfigFile string
 	CacheDir   string
 	Region     string
 }
 
-func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
+func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 
 	awsConfig := aws.NewConfig().WithRegion(v.Region)
 	sess, err := session.NewSession(awsConfig)
@@ -61,11 +61,11 @@ func (v *cmdGoogleLogin) run(c *kingpin.ParseContext) error {
 	return nil
 }
 
-// GoogleLogin sub-command.
-func GoogleLogin(app *kingpin.Application) {
-	v := new(cmdGoogleLogin)
+// Login sub-command.
+func Login(c *kingpin.CmdClause) {
+	v := new(cmdLogin)
 
-	command := app.Command("google-login", "Logs in a user using their google account.").Action(v.run)
+	command := c.Command("login", "Logs in a user using their google account.").Action(v.run)
 	homeDir, _ := os.UserHomeDir()
 	cacheDir, _ := os.UserCacheDir()
 	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/google.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
