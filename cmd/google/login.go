@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
+	"github.com/pkg/errors"
 	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/googleauth"
@@ -55,6 +56,10 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 	code := string(bytecode)
 
 	creds, err := loginHandler.Login(code)
+
+	if err != nil {
+		return errors.Wrap(err, "Failed to login")
+	}
 
 	fmt.Println(creds)
 
