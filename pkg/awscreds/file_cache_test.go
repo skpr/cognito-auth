@@ -16,7 +16,7 @@ func TestCredentialsCache(t *testing.T) {
 		SessionToken:    "1234567890ABCDEFGHIJKLMNOPQRSTU:VWXYZ|}{)(*&^%$#@!",
 		Expiry:          expiry,
 	}
-	cache := NewCredentialsCache("/tmp/skpr/credentials.yml")
+	cache := NewFileCache("/tmp/skpr/credentials.yml")
 	err := cache.Put(credentials)
 	assert.Nil(t, err)
 

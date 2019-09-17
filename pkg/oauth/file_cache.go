@@ -13,21 +13,22 @@ const (
 	filename = "oauth_tokens.yml"
 )
 
-// TokensCache handles caching oauth2 tokens.
-type TokensCache struct {
+// FileCache handles caching oauth2 tokens.
+type FileCache struct {
 	cacheFile string
 }
 
-// NewTokensCache creates a new instance.
-func NewTokensCache(cacheDir string) *TokensCache {
+// NewFileCache creates a new instance.
+func NewFileCache(cacheDir string) *FileCache {
 	f := cacheDir + "/" + filename
-	return &TokensCache{
+	return &FileCache{
 		cacheFile: f,
 	}
+
 }
 
 // Get will return the oauth token from cache.
-func (c *TokensCache) Get() (Tokens, error) {
+func (c *FileCache) Get() (Tokens, error) {
 
 	var tokens Tokens
 
@@ -54,7 +55,7 @@ func (c *TokensCache) Get() (Tokens, error) {
 }
 
 // Put writes an oauth token to cache.
-func (c *TokensCache) Put(token Tokens) error {
+func (c *FileCache) Put(token Tokens) error {
 
 	// Create parent directory if it doesn't exist.
 	if _, err := os.Stat(c.cacheFile); os.IsNotExist(err) {
@@ -79,7 +80,7 @@ func (c *TokensCache) Put(token Tokens) error {
 }
 
 // Delete the tokens file.
-func (c *TokensCache) Delete() error {
+func (c *FileCache) Delete(token Tokens) error {
 	err := os.Remove(c.cacheFile)
 	if err != nil {
 		return errors.Wrap(err, "Failed to delete tokens file")

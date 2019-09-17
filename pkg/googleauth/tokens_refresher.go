@@ -13,12 +13,12 @@ import (
 // TokensRefresher struct
 type TokensRefresher struct {
 	cognitoConfig config.Config
-	tokensCache   oauth.TokensCache
+	tokensCache   oauth.TokenCache
 	googleConfig  oauth2.Config
 }
 
 // NewTokensRefresher creates a new tokens refresher.
-func NewTokensRefresher(cognitoConfig *config.Config, tokensCache *oauth.TokensCache) *TokensRefresher {
+func NewTokensRefresher(cognitoConfig *config.Config, tokensCache oauth.TokenCache) *TokensRefresher {
 
 	return &TokensRefresher{
 		cognitoConfig: *cognitoConfig,
@@ -29,11 +29,11 @@ func NewTokensRefresher(cognitoConfig *config.Config, tokensCache *oauth.TokensC
 			Scopes:       []string{scopes},
 			Endpoint:     google.Endpoint,
 		},
-		tokensCache: *tokensCache,
+		tokensCache: tokensCache,
 	}
 }
 
-// RefreshOAuthTokens refreshes the oauth tokens, and saves them to file.
+// RefreshOAuthTokens refreshes the oauth tokens, and saves them.
 func (r *TokensRefresher) RefreshOAuthTokens(refreshToken string) (oauth.Tokens, error) {
 	token := oauth2.Token{
 		RefreshToken: refreshToken,

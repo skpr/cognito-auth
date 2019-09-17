@@ -33,8 +33,8 @@ func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
 		return err
 	}
 
-	tokensCache := oauth.NewTokensCache(v.CacheDir)
-	credentialsCache := awscreds.NewCredentialsCache(v.CacheDir)
+	tokensCache := oauth.NewFileCache(v.CacheDir)
+	credentialsCache := awscreds.NewFileCache(v.CacheDir)
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
 	cognitoIdentity := cognitoidentity.New(sess)
 	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokensCache, cognitoIdentityProvider)

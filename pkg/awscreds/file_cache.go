@@ -12,21 +12,21 @@ const (
 	filename = "aws_credentials.yml"
 )
 
-// CredentialsCache handles getting and putting credentials from a cache
-type CredentialsCache struct {
+// FileCache handles getting and putting credentials from a cache
+type FileCache struct {
 	filename string
 }
 
-// NewCredentialsCache creates a new instance
-func NewCredentialsCache(cacheDir string) *CredentialsCache {
+// NewFileCache creates a new instance
+func NewFileCache(cacheDir string) *FileCache {
 	file := cacheDir + "/" + filename
-	return &CredentialsCache{
+	return &FileCache{
 		filename: file,
 	}
 }
 
 // Get loads awscreds credentials from cache.
-func (c *CredentialsCache) Get() (Credentials, error) {
+func (c *FileCache) Get() (Credentials, error) {
 
 	var credentials Credentials
 
@@ -53,7 +53,7 @@ func (c *CredentialsCache) Get() (Credentials, error) {
 }
 
 // Put saves awscreds credentials to cache.
-func (c *CredentialsCache) Put(credentials Credentials) error {
+func (c *FileCache) Put(credentials Credentials) error {
 	// Create parent directory if it doesn't exist.
 	if _, err := os.Stat(c.filename); os.IsNotExist(err) {
 		dir := path.Dir(c.filename)
@@ -75,7 +75,7 @@ func (c *CredentialsCache) Put(credentials Credentials) error {
 }
 
 // Delete the credentials from cache.
-func (c *CredentialsCache) Delete() error {
+func (c *FileCache) Delete() error {
 	err := os.Remove(c.filename)
 	if err != nil {
 		return errors.Wrap(err, "Failed to delete credentials file")

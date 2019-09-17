@@ -10,15 +10,15 @@ import (
 // TokensRefresher struct
 type TokensRefresher struct {
 	cognitoConfig           config.Config
-	tokensCache             oauth.TokensCache
+	tokenCache              oauth.TokenCache
 	cognitoIdentityProvider cognitoidentityprovider.CognitoIdentityProvider
 }
 
 // NewTokensRefresher creates a new tokens refresher.
-func NewTokensRefresher(cognitoConfig *config.Config, tokensCache *oauth.TokensCache, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider) *TokensRefresher {
+func NewTokensRefresher(cognitoConfig *config.Config, tokenCache oauth.TokenCache, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider) *TokensRefresher {
 	return &TokensRefresher{
 		cognitoConfig:           *cognitoConfig,
-		tokensCache:             *tokensCache,
+		tokenCache:              tokenCache,
 		cognitoIdentityProvider: *cognitoIdentityProvider,
 	}
 }
@@ -41,7 +41,7 @@ func (r *TokensRefresher) RefreshOAuthTokens(refreshToken string) (oauth.Tokens,
 	// We don't get a refresh token for a refresh auth request, so add it back.
 	tokens.RefreshToken = refreshToken
 
-	err = r.tokensCache.Put(tokens)
+	err = r.tokenCache.Put(tokens)
 	if err != nil {
 		return oauth.Tokens{}, errors.Wrap(err, "Failed to save tokens to cache")
 	}

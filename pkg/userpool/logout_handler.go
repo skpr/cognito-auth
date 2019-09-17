@@ -9,17 +9,17 @@ import (
 
 // LogoutHandler struct.
 type LogoutHandler struct {
-	credentialsCache        awscreds.CredentialsCache
-	tokensCache             oauth.TokensCache
+	credentialsCache        awscreds.FileCache
+	tokenCache              oauth.TokenCache
 	tokensResolver          oauth.TokensResolver
 	cognitoIdentityProvider cognitoidentityprovider.CognitoIdentityProvider
 }
 
 // NewLogoutHandler creates a logout handler.
-func NewLogoutHandler(credentialsCache *awscreds.CredentialsCache, tokensCache *oauth.TokensCache, tokensResolver *oauth.TokensResolver, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider) *LogoutHandler {
+func NewLogoutHandler(credentialsCache *awscreds.FileCache, tokenCache oauth.TokenCache, tokensResolver *oauth.TokensResolver, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider) *LogoutHandler {
 	return &LogoutHandler{
 		credentialsCache:        *credentialsCache,
-		tokensCache:             *tokensCache,
+		tokenCache:              tokenCache,
 		cognitoIdentityProvider: *cognitoIdentityProvider,
 		tokensResolver:          *tokensResolver,
 	}
@@ -43,7 +43,7 @@ func (r *LogoutHandler) Logout() error {
 	if err != nil {
 		return err
 	}
-	err = r.tokensCache.Delete()
+	err = r.tokenCache.Delete(tokens)
 	if err != nil {
 		return err
 	}

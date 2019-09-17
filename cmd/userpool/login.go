@@ -14,6 +14,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
+	"os/user"
 	"strings"
 	"syscall"
 )
@@ -23,6 +24,7 @@ type cmdLogin struct {
 	Password   string
 	ConfigFile string
 	CacheDir   string
+	CredsStore string
 	Region     string
 }
 
@@ -55,16 +57,25 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		return err
 	}
 
-	tokensCache := oauth.NewTokensCache(v.CacheDir)
-	credentialsCache := awscreds.NewCredentialsCache(v.CacheDir)
+	var tokenCache oauth.TokenCache
+	tokenCache = oauth.NewFileCache(v.CacheDir)
+	if v.CredsStore == "native" {
+		currentUser, err := user.Current()
+		if err != nil {
+			return err
+		}
+		tokenCache = oauth.NewKeychainCache("Cognito Auth Credentials", "http://example.com/v1", currentUser.Username)
+	}
+
+	credentialsCache := awscreds.NewFileCache(v.CacheDir)
 
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
 	cognitoIdentity := cognitoidentity.New(sess)
-	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokensCache, cognitoIdentityProvider)
-	tokensResolver := oauth.NewTokensResolver(tokensCache, tokensRefresher)
+	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokenCache, cognitoIdentityProvider)
+	tokensResolver := oauth.NewTokensResolver(tokenCache, tokensRefresher)
 	credentialsResolver := awscreds.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
 
-	loginHandler := userpool.NewLoginHandler(tokensCache, &cognitoConfig, cognitoIdentityProvider, credentialsResolver)
+	loginHandler := userpool.NewLoginHandler(tokenCache, &cognitoConfig, cognitoIdentityProvider, credentialsResolver)
 
 	creds, challenge, err := loginHandler.Login(v.Username, password)
 	if err != nil {
@@ -127,5 +138,6 @@ func Login(c *kingpin.CmdClause) {
 	cacheDir, _ := os.UserCacheDir()
 	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/userpool.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
 	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").Envar("COGNITO_AUTH_CACHE_DIR").StringVar(&v.CacheDir)
+	command.Flag("creds-store", "The credentials store to use.").Default("file").Envar("COGNITO_AUTH_CREDS_STORE").StringVar(&v.CredsStore)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").Envar("COGNITO_AUTH_REGION").StringVar(&v.Region)
 }

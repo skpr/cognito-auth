@@ -8,7 +8,7 @@ import (
 
 func TestTokensCache(t *testing.T) {
 
-	expiry := time.Now().UTC().Add(time.Duration(300 * time.Second)).Truncate(time.Duration(time.Second))
+	expiry := time.Now().UTC().Add(300 * time.Second).Truncate(time.Second)
 
 	tokens := Tokens{
 		AccessToken:  "ABCDEFGHIJKLMNOP1234567890",
@@ -17,7 +17,7 @@ func TestTokensCache(t *testing.T) {
 		Expiry:       expiry,
 	}
 
-	tokensCache := NewTokensCache("/tmp/skpr/oauth.yml")
+	tokensCache := NewFileCache("/tmp/skpr/oauth.yml")
 	err := tokensCache.Put(tokens)
 	assert.Nil(t, err)
 
@@ -31,7 +31,7 @@ func TestTokensCache(t *testing.T) {
 }
 
 func TestHasExpired(t *testing.T) {
-	expiry := time.Now().UTC().Add(time.Duration(-300 * time.Second)).Truncate(time.Duration(time.Second))
+	expiry := time.Now().UTC().Add(-300 * time.Second).Truncate(time.Second)
 	tokens := Tokens{
 		AccessToken:  "ABCDEFGHIJKLMNOP1234567890",
 		RefreshToken: "ABCDEFGHIJKLMNOP",

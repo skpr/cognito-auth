@@ -19,12 +19,12 @@ const (
 type LoginHandler struct {
 	cognitoConfig       config.Config
 	googleConfig        oauth2.Config
-	tokensCache         oauth.TokensCache
+	tokensCache         oauth.TokenCache
 	credentialsResolver awscreds.CredentialsResolver
 }
 
 // NewLoginHandler creates a new login handler
-func NewLoginHandler(config *config.Config, tokensCache *oauth.TokensCache, credentialsResolver *awscreds.CredentialsResolver) *LoginHandler {
+func NewLoginHandler(config *config.Config, tokensCache oauth.TokenCache, credentialsResolver *awscreds.CredentialsResolver) *LoginHandler {
 	return &LoginHandler{
 		cognitoConfig: *config,
 		googleConfig: oauth2.Config{
@@ -34,7 +34,7 @@ func NewLoginHandler(config *config.Config, tokensCache *oauth.TokensCache, cred
 			Scopes:       []string{scopes},
 			Endpoint:     google.Endpoint,
 		},
-		tokensCache:         *tokensCache,
+		tokensCache:         tokensCache,
 		credentialsResolver: *credentialsResolver,
 	}
 }

@@ -10,16 +10,16 @@ import (
 
 // LoginHandler handles cognito user pool functions.
 type LoginHandler struct {
-	tokensCache             oauth.TokensCache
+	tokenCache              oauth.TokenCache
 	cognitoConfig           config.Config
 	cognitoIdentityProvider cognitoidentityprovider.CognitoIdentityProvider
 	credentialsResolver     awscreds.CredentialsResolver
 }
 
 // NewLoginHandler creates a new login handler.
-func NewLoginHandler(tokensCache *oauth.TokensCache, cognitoConfig *config.Config, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider, credentialsResolver *awscreds.CredentialsResolver) LoginHandler {
+func NewLoginHandler(tokenCache oauth.TokenCache, cognitoConfig *config.Config, cognitoIdentityProvider *cognitoidentityprovider.CognitoIdentityProvider, credentialsResolver *awscreds.CredentialsResolver) LoginHandler {
 	return LoginHandler{
-		tokensCache:             *tokensCache,
+		tokenCache:              tokenCache,
 		cognitoConfig:           *cognitoConfig,
 		cognitoIdentityProvider: *cognitoIdentityProvider,
 		credentialsResolver:     *credentialsResolver,
@@ -52,7 +52,7 @@ func (r *LoginHandler) Login(username string, password string) (awscreds.Credent
 
 	tokens := extractTokensFromAuthResult(authOutput.AuthenticationResult)
 
-	err = r.tokensCache.Put(tokens)
+	err = r.tokenCache.Put(tokens)
 
 	if err != nil {
 		return awscreds.Credentials{}, ChallengeResponse{}, errors.Wrap(err, "Failed to save tokens to cache")
