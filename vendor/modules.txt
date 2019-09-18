@@ -46,7 +46,6 @@ github.com/davecgh/go-spew/spew
 # github.com/docker/docker-credential-helpers v0.6.3
 github.com/docker/docker-credential-helpers/credentials
 github.com/docker/docker-credential-helpers/osxkeychain
-github.com/docker/docker-credential-helpers/secretservice
 github.com/docker/docker-credential-helpers/registryurl
 # github.com/fatih/color v1.7.0
 github.com/fatih/color
