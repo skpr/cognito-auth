@@ -1,10 +1,8 @@
 package secrets
 
 import (
-	"github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/docker-credential-helpers/credentials"
 	"github.com/pkg/errors"
-	"runtime"
 )
 
 // Keychain defines a keychain.
@@ -31,36 +29,26 @@ func (k *Keychain) Put(secret string) error {
 		Username:  k.account,
 		Secret:    secret,
 	}
-	return client.Store(k.getNativeStore(), creds)
+	nativeStore := GetNativeStore()
+	return nativeStore.Add(creds)
 }
 
 // Get retrieves a secret.
 func (k *Keychain) Get() (string, error) {
-	creds, err := client.Get(k.getNativeStore(), k.service)
+	nativeStore := GetNativeStore()
+
+	_, secret, err := nativeStore.Get(k.service)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get secret")
 	}
-	return creds.Secret, nil
+	return secret, nil
 }
 
 // Delete deletes a secret.
 func (k *Keychain) Delete() error {
-	if err := client.Erase(k.getNativeStore(), k.service); err != nil {
+	nativeStore := GetNativeStore()
+	if err := nativeStore.Delete(k.service); err != nil {
 		return errors.Wrap(err, "failed to delete secret")
 	}
 	return nil
-}
-
-// getNativeStore gets the native keychain store.
-func (k *Keychain) getNativeStore() client.ProgramFunc {
-	switch os := runtime.GOOS; os {
-	case "linux":
-		return client.NewShellProgramFunc("docker-credential-secretservice")
-	case "darwin":
-		return client.NewShellProgramFunc("docker-credential-osxkeychain")
-	case "windows":
-		return client.NewShellProgramFunc("docker-credential-wincred")
-	default:
-		return nil
-	}
 }

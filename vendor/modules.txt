@@ -44,8 +44,9 @@ github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/docker/docker-credential-helpers v0.6.3
-github.com/docker/docker-credential-helpers/client
 github.com/docker/docker-credential-helpers/credentials
+github.com/docker/docker-credential-helpers/osxkeychain
+github.com/docker/docker-credential-helpers/registryurl
 # github.com/fatih/color v1.7.0
 github.com/fatih/color
 # github.com/golang/protobuf v1.3.2

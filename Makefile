@@ -7,12 +7,14 @@ VERSION=$(shell git describe --tags --always)
 COMMIT=$(shell git rev-list -1 HEAD)
 
 # Builds the project.
+define go_build
+	GOOS=${1} GOARCH=${2} go build -o bin/cognito_auth_${1}_${2} -ldflags='-extldflags "-static"' github.com/skpr/cognito-auth
+endef
+
+# Builds the project.
 build:
-	gox -os='linux darwin' \
-	    -arch='amd64' \
-	    -output='bin/cognito_auth_{{.OS}}_{{.Arch}}' \
-	    -ldflags='-extldflags "-static" -X github.com/skpr/cognito-auth/cmd.GitVersion=${VERSION} -X github.com/skpr/cognito-auth/cmd.GitCommit=${COMMIT}' \
-	    $(PROJECT)
+	$(call go_build,linux,amd64)
+	$(call go_build,darwin,amd64)
 
 # Run all lint checking with exit codes for CI.
 lint:
