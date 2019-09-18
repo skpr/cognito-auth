@@ -1,18 +1,22 @@
 #!/usr/bin/make -f
 
-export CGO_ENABLED=0
-
 PROJECT=github.com/skpr/cognito-auth
 VERSION=$(shell git describe --tags --always)
 COMMIT=$(shell git rev-list -1 HEAD)
 
 # Builds the project.
 define go_build
-	GOOS=${1} GOARCH=${2} go build -o bin/cognito_auth_${1}_${2} -ldflags='-extldflags "-static"' github.com/skpr/cognito-auth
+	GOOS=${1} GOARCH=${2} go build -o bin/cognito_auth_${1}_${2} github.com/skpr/cognito-auth
 endef
 
-# Builds the project.
-build:
+osx:
+	$(call go_build,darwin,amd64)
+
+linux:
+	$(call go_build,linux,amd64)
+
+# Builds the all binaries.
+all:
 	$(call go_build,linux,amd64)
 	$(call go_build,darwin,amd64)
 
