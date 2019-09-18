@@ -15,8 +15,6 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, "https://console.awscreds.amazon.com/cloudwatch", c.ConsoleDestination, "console_destination was set")
 	assert.Equal(t, "example.com", c.ConsoleIssuer, "console_issuer was set")
 	assert.Equal(t, "native", c.CredsStore, "creds_store was set")
-	assert.Equal(t, "https://pnx.auth.ap-southeast-2.amazoncognito.com", c.CredsOAuthKeyURL, "creds_oauth_key_url was set")
-	assert.Equal(t, "https://pnx.auth.ap-southeast-2.amazoncognito.com", c.CredsAwsKeyURL, "creds_aws_key_url was set")
-	assert.Equal(t, "Cognito OAuth Tokens", c.CredsOAuthLabel, "creds_oauth_label was set")
-	assert.Equal(t, "Cognito AWS Credentials", c.CredsAwsLabel, "creds_aws_label was set")
+	assert.Equal(t, "Cognito OAuth Tokens", c.CredsOAuthKey, "creds_oauth_key_url was set")
+	assert.Equal(t, "Cognito AWS Credentials", c.CredsAwsKey, "creds_aws_key_url was set")
 }

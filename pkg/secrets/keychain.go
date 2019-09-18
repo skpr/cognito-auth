@@ -6,15 +6,13 @@ import (
 
 // Keychain defines a keychain.
 type Keychain struct {
-	label   string
 	service string
 	account string
 }
 
 // NewKeychain creates a new keychain.
-func NewKeychain(label string, service string, account string) *Keychain {
+func NewKeychain(service string, account string) *Keychain {
 	return &Keychain{
-		label:   label,
 		service: service,
 		account: account,
 	}

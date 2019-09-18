@@ -65,7 +65,7 @@ func (v *cmdResetPassword) run(c *kingpin.ParseContext) error {
 	fmt.Println("Please check your email for a password reset code.")
 	fmt.Print("Enter the password reset code: ")
 
-	code, _ := reader.ReadString('\n')
+	code, err := reader.ReadString('\n')
 	code = strings.TrimSpace(code)
 	if err != nil {
 		fmt.Println(err)

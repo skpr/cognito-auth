@@ -23,7 +23,6 @@ type cmdLogin struct {
 	ConfigFile string
 	CacheDir   string
 	Region     string
-	CredsStore string
 }
 
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
@@ -39,18 +38,17 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		return err
 	}
 
-	currentUser, err := user.Current()
-	if err != nil {
-		return err
-	}
-
 	var tokenCache oauth.TokenCache
 	var credentialsCache awscreds.CredentialsCache
 
-	if v.CredsStore == "native" {
-		oauth2Keychain := secrets.NewKeychain(cognitoConfig.CredsOAuthLabel, cognitoConfig.CredsOAuthKeyURL, currentUser.Username)
+	if cognitoConfig.CredsStore == "native" {
+		currentUser, err := user.Current()
+		if err != nil {
+			return err
+		}
+		oauth2Keychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, currentUser.Username)
 		tokenCache = oauth.NewKeychainCache(oauth2Keychain)
-		awsCredsKeychain := secrets.NewKeychain(cognitoConfig.CredsAwsLabel, cognitoConfig.CredsAwsKeyURL, currentUser.Username)
+		awsCredsKeychain := secrets.NewKeychain(cognitoConfig.CredsAwsKey, currentUser.Username)
 		credentialsCache = awscreds.NewKeychainCache(awsCredsKeychain)
 	} else {
 		tokenCache = oauth.NewFileCache(v.CacheDir)
@@ -94,6 +92,5 @@ func Login(c *kingpin.CmdClause) {
 	cacheDir, _ := os.UserCacheDir()
 	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/google.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
 	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").Envar("COGNITO_AUTH_CACHE_DIR").StringVar(&v.CacheDir)
-	command.Flag("creds-store", "The credentials store to use.").Default("file").Envar("COGNITO_AUTH_CREDS_STORE").StringVar(&v.CredsStore)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").Envar("COGNITO_AUTH_REGION").StringVar(&v.Region)
 }
