@@ -12,8 +12,7 @@ type KeychainCache struct {
 }
 
 // NewKeychainCache creates a new keychain cache.
-func NewKeychainCache(label string, service string, account string) *KeychainCache {
-	keychain := secrets.NewKeychain(label, service, account)
+func NewKeychainCache(keychain *secrets.Keychain) *KeychainCache {
 	return &KeychainCache{
 		keychain: *keychain,
 	}
@@ -36,7 +35,7 @@ func (k KeychainCache) Get() (Tokens, error) {
 	return tokens, nil
 }
 
-// Put puts the tokens from the keychain.
+// Put puts the tokens in the keychain.
 func (k KeychainCache) Put(token Tokens) error {
 	data, err := yaml.Marshal(&token)
 	if err != nil {

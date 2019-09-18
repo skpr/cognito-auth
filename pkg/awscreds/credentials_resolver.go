@@ -10,16 +10,16 @@ import (
 // CredentialsResolver struct
 type CredentialsResolver struct {
 	cognitoConfig    config.Config
-	credentialsCache FileCache
+	credentialsCache CredentialsCache
 	tokensResolver   oauth.TokensResolver
 	cognitoIdentity  cognitoidentity.CognitoIdentity
 }
 
 // NewCredentialsResolver creates a new credentials resolver.
-func NewCredentialsResolver(cognitoConfig *config.Config, credentialsCache *FileCache, tokensResolver *oauth.TokensResolver, cognitoIdentity *cognitoidentity.CognitoIdentity) *CredentialsResolver {
+func NewCredentialsResolver(cognitoConfig *config.Config, credentialsCache CredentialsCache, tokensResolver *oauth.TokensResolver, cognitoIdentity *cognitoidentity.CognitoIdentity) *CredentialsResolver {
 	return &CredentialsResolver{
 		cognitoConfig:    *cognitoConfig,
-		credentialsCache: *credentialsCache,
+		credentialsCache: credentialsCache,
 		tokensResolver:   *tokensResolver,
 		cognitoIdentity:  *cognitoIdentity,
 	}

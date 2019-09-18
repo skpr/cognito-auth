@@ -75,7 +75,7 @@ func (c *FileCache) Put(credentials Credentials) error {
 }
 
 // Delete the credentials from cache.
-func (c *FileCache) Delete() error {
+func (c *FileCache) Delete(credentials Credentials) error {
 	err := os.Remove(c.filename)
 	if err != nil {
 		return errors.Wrap(err, "Failed to delete credentials file")

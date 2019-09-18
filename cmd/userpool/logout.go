@@ -2,13 +2,14 @@ package userpool
 
 import (
 	"fmt"
+	"github.com/skpr/cognito-auth/pkg/awscreds"
+	"github.com/skpr/cognito-auth/pkg/secrets"
 	"os"
 	"os/user"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	awscredentials "github.com/skpr/cognito-auth/pkg/awscreds"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/skpr/cognito-auth/pkg/config"
@@ -36,16 +37,24 @@ func (v *cmdLogout) run(c *kingpin.ParseContext) error {
 		return err
 	}
 
-	var tokenCache oauth.TokenCache
-	tokenCache = oauth.NewFileCache(v.CacheDir)
-	if v.CredsStore == "native" {
-		currentUser, err := user.Current()
-		if err != nil {
-			return err
-		}
-		tokenCache = oauth.NewKeychainCache("Cognito Auth Credentials", "http://example.com/v1", currentUser.Username)
+	currentUser, err := user.Current()
+	if err != nil {
+		return err
 	}
-	credentialsCache := awscredentials.NewFileCache(v.CacheDir)
+
+	var tokenCache oauth.TokenCache
+	var credentialsCache awscreds.CredentialsCache
+
+	if v.CredsStore == "native" {
+		oauth2Keychain := secrets.NewKeychain("Cognito OAuth2 Tokens", "http://example.com", currentUser.Username)
+		tokenCache = oauth.NewKeychainCache(oauth2Keychain)
+		awsCredsKeychain := secrets.NewKeychain("Cognito AWS Credentials", "http://example.com", currentUser.Username)
+		credentialsCache = awscreds.NewKeychainCache(awsCredsKeychain)
+	} else {
+		tokenCache = oauth.NewFileCache(v.CacheDir)
+		credentialsCache = awscreds.NewFileCache(v.CacheDir)
+	}
+
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
 	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokenCache, cognitoIdentityProvider)
 	tokensResolver := oauth.NewTokensResolver(tokenCache, tokensRefresher)
