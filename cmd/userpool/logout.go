@@ -2,6 +2,7 @@ package userpool
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/secrets"
 	"os"
@@ -26,7 +27,7 @@ type cmdLogout struct {
 }
 
 func (v *cmdLogout) run(c *kingpin.ParseContext) error {
-	awsConfig := aws.NewConfig().WithRegion(v.Region)
+	awsConfig := aws.NewConfig().WithRegion(v.Region).WithCredentials(credentials.AnonymousCredentials)
 	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		return err

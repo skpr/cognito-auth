@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
@@ -25,7 +26,7 @@ type cmdConsoleSignIn struct {
 }
 
 func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
-	awsConfig := aws.NewConfig().WithRegion(v.Region)
+	awsConfig := aws.NewConfig().WithRegion(v.Region).WithCredentials(credentials.AnonymousCredentials)
 	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		return err

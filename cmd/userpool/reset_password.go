@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/skpr/cognito-auth/pkg/config"
@@ -24,7 +25,7 @@ type cmdResetPassword struct {
 
 func (v *cmdResetPassword) run(c *kingpin.ParseContext) error {
 
-	awsConfig := aws.NewConfig().WithRegion(v.Region)
+	awsConfig := aws.NewConfig().WithRegion(v.Region).WithCredentials(credentials.AnonymousCredentials)
 	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		fmt.Println(err)

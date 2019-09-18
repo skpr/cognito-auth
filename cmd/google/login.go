@@ -3,6 +3,7 @@ package google
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/pkg/errors"
@@ -27,7 +28,7 @@ type cmdLogin struct {
 
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 
-	awsConfig := aws.NewConfig().WithRegion(v.Region)
+	awsConfig := aws.NewConfig().WithRegion(v.Region).WithCredentials(credentials.AnonymousCredentials))
 	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		return err
