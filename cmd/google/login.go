@@ -28,7 +28,7 @@ type cmdLogin struct {
 
 func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 
-	awsConfig := aws.NewConfig().WithRegion(v.Region).WithCredentials(credentials.AnonymousCredentials))
+	awsConfig := aws.NewConfig().WithRegion(v.Region).WithCredentials(credentials.AnonymousCredentials)
 	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		return err
