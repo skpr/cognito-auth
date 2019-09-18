@@ -31,4 +31,4 @@ release-github: build
 
 release: release-github
 
-.PHONY: build lint test release-docker release-github release
+.PHONY: *
