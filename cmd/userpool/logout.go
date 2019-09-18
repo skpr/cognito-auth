@@ -2,25 +2,31 @@ package userpool
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/skpr/cognito-auth/pkg/awscreds"
+	"github.com/skpr/cognito-auth/pkg/secrets"
+	"os"
+	"os/user"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	awscredentials "github.com/skpr/cognito-auth/pkg/awscreds"
+	"gopkg.in/alecthomas/kingpin.v2"
+
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/oauth"
 	"github.com/skpr/cognito-auth/pkg/userpool"
-	"gopkg.in/alecthomas/kingpin.v2"
-	"os"
 )
 
 type cmdLogout struct {
 	ConfigFile string
 	CacheDir   string
 	Region     string
+	Username   string
 }
 
 func (v *cmdLogout) run(c *kingpin.ParseContext) error {
-	awsConfig := aws.NewConfig().WithRegion(v.Region)
+	awsConfig := aws.NewConfig().WithRegion(v.Region).WithCredentials(credentials.AnonymousCredentials)
 	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		return err
@@ -31,13 +37,28 @@ func (v *cmdLogout) run(c *kingpin.ParseContext) error {
 		return err
 	}
 
-	tokensCache := oauth.NewTokensCache(v.CacheDir)
-	credentialsCache := awscredentials.NewCredentialsCache(v.CacheDir)
-	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
-	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokensCache, cognitoIdentityProvider)
-	tokensResolver := oauth.NewTokensResolver(tokensCache, tokensRefresher)
+	var tokenCache oauth.TokenCache
+	var credentialsCache awscreds.CredentialsCache
 
-	logoutHander := userpool.NewLogoutHandler(credentialsCache, tokensCache, tokensResolver, cognitoIdentityProvider)
+	if cognitoConfig.CredsStore == "native" {
+		currentUser, err := user.Current()
+		if err != nil {
+			return err
+		}
+		oauth2Keychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, currentUser.Username)
+		tokenCache = oauth.NewKeychainCache(oauth2Keychain)
+		awsCredsKeychain := secrets.NewKeychain(cognitoConfig.CredsAwsKey, currentUser.Username)
+		credentialsCache = awscreds.NewKeychainCache(awsCredsKeychain)
+	} else {
+		tokenCache = oauth.NewFileCache(v.CacheDir)
+		credentialsCache = awscreds.NewFileCache(v.CacheDir)
+	}
+
+	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
+	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokenCache, cognitoIdentityProvider)
+	tokensResolver := oauth.NewTokensResolver(tokenCache, tokensRefresher)
+
+	logoutHander := userpool.NewLogoutHandler(credentialsCache, tokenCache, tokensResolver, cognitoIdentityProvider)
 
 	err = logoutHander.Logout()
 	if err != nil {

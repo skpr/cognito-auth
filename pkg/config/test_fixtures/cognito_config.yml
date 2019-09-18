@@ -4,3 +4,6 @@ identity_provider_id: LMNOPQRTSUV
 identity_pool_id: WXYZ0123456789
 console_destination: https://console.awscreds.amazon.com/cloudwatch
 console_issuer: example.com
+creds_store: native
+creds_oauth_key: Cognito OAuth Tokens
+creds_aws_key: Cognito AWS Credentials

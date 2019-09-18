@@ -4,14 +4,14 @@ import "github.com/pkg/errors"
 
 // TokensResolver struct
 type TokensResolver struct {
-	tokensCache     TokensCache
+	tokensCache     TokenCache
 	tokensRefresher TokensRefresher
 }
 
 // NewTokensResolver creates a new tokens resolver.
-func NewTokensResolver(tokensCache *TokensCache, tokensRefresher TokensRefresher) *TokensResolver {
+func NewTokensResolver(tokensCache TokenCache, tokensRefresher TokensRefresher) *TokensResolver {
 	return &TokensResolver{
-		tokensCache:     *tokensCache,
+		tokensCache:     tokensCache,
 		tokensRefresher: tokensRefresher,
 	}
 }

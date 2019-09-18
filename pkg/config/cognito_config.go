@@ -15,6 +15,9 @@ type Config struct {
 	IdentityProviderID string `yaml:"identity_provider_id"`
 	ConsoleDestination string `yaml:"console_destination"`
 	ConsoleIssuer      string `yaml:"console_issuer"`
+	CredsStore         string `yaml:"creds_store,omitempty"`
+	CredsOAuthKey      string `yaml:"creds_oauth_key,omitempty"`
+	CredsAwsKey        string `yaml:"creds_aws_key,omitempty"`
 }
 
 // Load load awscreds credentials from a file.
