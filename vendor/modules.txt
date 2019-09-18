@@ -41,14 +41,14 @@ github.com/aws/aws-sdk-go/private/protocol/query
 github.com/aws/aws-sdk-go/internal/sdkuri
 github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
+# github.com/danieljoos/wincred v1.0.2
+github.com/danieljoos/wincred
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/docker/docker-credential-helpers v0.6.3
-github.com/docker/docker-credential-helpers/credentials
-github.com/docker/docker-credential-helpers/osxkeychain
-github.com/docker/docker-credential-helpers/registryurl
 # github.com/fatih/color v1.7.0
 github.com/fatih/color
+# github.com/godbus/dbus v4.1.0+incompatible
+github.com/godbus/dbus
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
 # github.com/gosuri/uitable v0.0.3
@@ -69,6 +69,9 @@ github.com/pkg/errors
 github.com/pmezard/go-difflib/difflib
 # github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
+# github.com/zalando/go-keyring v0.0.0-20190913082157-62750a1ff80d
+github.com/zalando/go-keyring
+github.com/zalando/go-keyring/secret_service
 # golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20190916140828-c8589233b77d

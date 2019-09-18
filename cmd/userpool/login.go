@@ -67,9 +67,9 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 	var credentialsCache awscreds.CredentialsCache
 
 	if v.CredsStore == "native" {
-		oauth2Keychain := secrets.NewKeychain("Cognito OAuth2 Tokens", "http://example.com", currentUser.Username)
+		oauth2Keychain := secrets.NewKeychain("Cognito OAuth2 Tokens", "Cognito OAuth Tokens", currentUser.Username)
 		tokenCache = oauth.NewKeychainCache(oauth2Keychain)
-		awsCredsKeychain := secrets.NewKeychain("Cognito AWS Credentials", "http://example.com", currentUser.Username)
+		awsCredsKeychain := secrets.NewKeychain("Cognito AWS Credentials", "Cognito AWS Credentials", currentUser.Username)
 		credentialsCache = awscreds.NewKeychainCache(awsCredsKeychain)
 	} else {
 		tokenCache = oauth.NewFileCache(v.CacheDir)
