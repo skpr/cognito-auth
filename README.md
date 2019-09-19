@@ -4,7 +4,10 @@
 
 **Maintainer**: Kim Pepper
 
-Cognito Auth is a Go package for authenticating with AWS Cognito from the command line.
+Cognito Auth is a Go package for authenticating with AWS Cognito from the command line,
+retrieving temporary, limited-privilege credentials for AWS Identity and Access Management (IAM).
+
+These are stored locally for re-use, and automatically refreshed if stale.
 
 ## Commands
 
@@ -64,7 +67,7 @@ or `$HOME/.cache/cognito-auth/` (Linux).
 
 Cognito Auth looks for a configuration file in `$HOME/.config/cognito-auth/google.yml`.
 
-```
+```yaml
 identity_provider_id: accounts.google.com
 identity_pool_id: <YOUR IDENTITY POOL ID>
 client_id: <YOUR CLIENT ID>
