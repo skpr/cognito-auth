@@ -6,6 +6,70 @@
 
 Cognito Auth is a Go package for authenticating with AWS Cognito from the command line.
 
+## Commands
+
+Two modes of authentication are supported:
+
+- Cognito User Pool Authentication
+- Google Authentication
+
+```
+  help [<command>...]
+    Show help.
+
+  google login [<flags>]
+    Logs in a user using their google account.
+
+  userpool login --username=USERNAME [<flags>]
+    Logs in a user to a Cognito Userpool.
+
+  userpool logout [<flags>]
+    Logs out a user from a Cognito Userpool
+
+  userpool reset-password --username=USERNAME [<flags>]
+    Resets a users Cognito Userpool password.
+```
+
+Once a user has logged in, they are able to generate a one-time sign in URL to the 
+AWS Console:
+
+```
+  console-signin [<flags>]
+    Generates a console sign-in link.
+```
+
+
+## Configuration
+
+By default, Cognito Auth looks for a configuration file in `$HOME/.config/cognito-auth/userpool.yml`.
+
+Example configuration:
+
+```yaml
+identity_provider_id: <YOUR IDENTITY PROVIDER ID> 
+identity_pool_id: <YOUR IDENTITY POOL ID>
+client_id: <YOUR CLIENT ID>
+console_destination: https://console.aws.amazon.com/cloudwatch
+console_issuer: <YOUR CONSOLE ISSUER URL>
+```
+
+By default, it will store OAuth2 tokens and AWS STS Credentials in `$HOME/Library/Caches/cognito-auth/` (MacOS)
+or `$HOME/.cache/cognito-auth/` (Linux).
+
+### Secure Token Storage
+
+Cognito Auth allows you to store OAuth2 tokens and AWS Credentials in a OS-native keychain.
+
+To enable this feature, add the following lines to the configuration:
+
+```yaml
+creds_store: native
+creds_oauth_key: Cognito OAuth Tokens
+creds_aws_key: Cognito AWS Credentials
+``` 
+
+`creds_oauth_key` and `creds_aws_key` are used as the unque keychain item key for storage.
+ 
 ## Development
 
 ### Getting started
@@ -39,28 +103,6 @@ $ bin/cognito_auth_darwin_amd64 --help
 ### Dependencies
 
 cognito-auth use [Go Modules](https://blog.golang.org/using-go-modules) for managing dependencies.
-
-### Documentation
-
-See `/docs`
-
-### Tooling
-
-Testing:
-
-```bash
-go get -u github.com/golang/lint/golint
-```
-
-Release management:
-```bash
-go get -u github.com/tcnksm/ghr
-```
-
-Build:
-```
-go get -u github.com/mitchellh/gox
-```
 
 #### Releases
 
