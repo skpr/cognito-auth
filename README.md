@@ -41,7 +41,9 @@ AWS Console:
 
 ## Configuration
 
-By default, Cognito Auth looks for a configuration file in `$HOME/.config/cognito-auth/userpool.yml`.
+### User Pool Authentication
+
+Cognito Auth looks for a configuration file in `$HOME/.config/cognito-auth/userpool.yml`.
 
 Example configuration:
 
@@ -53,8 +55,28 @@ console_destination: https://console.aws.amazon.com/cloudwatch
 console_issuer: <YOUR CONSOLE ISSUER URL>
 ```
 
-By default, it will store OAuth2 tokens and AWS STS Credentials in `$HOME/Library/Caches/cognito-auth/` (MacOS)
+*Note:* `client_secret` is optional for User Pool Authentication.
+
+By default, it will store OAuth2 tokens and AWS STS Credentials in yaml *files* in `$HOME/Library/Caches/cognito-auth/` (MacOS)
 or `$HOME/.cache/cognito-auth/` (Linux).
+
+### Google Authentication
+
+Cognito Auth looks for a configuration file in `$HOME/.config/cognito-auth/google.yml`.
+
+```
+identity_provider_id: accounts.google.com
+identity_pool_id: <YOUR IDENTITY POOL ID>
+client_id: <YOUR CLIENT ID>
+client_secret: <YOUR CLIENT SECRET>
+console_destination: https://console.aws.amazon.com/cloudwatch
+console_issuer: <YOUR CONSOLE ISSUER URL>
+```
+
+The Google Authentication uses the code flow. You will be presented with a page displaying an
+authorisation code. You need to copy and past that into the console when prompted.
+
+*Note:* `client_secret` is required for Google Authentication.
 
 ### Secure Token Storage
 
