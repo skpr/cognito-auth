@@ -46,9 +46,9 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		if err != nil {
 			return err
 		}
-		oauth2Keychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, currentUser.Username)
+		oauth2Keychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, *currentUser)
 		tokenCache = oauth.NewKeychainCache(oauth2Keychain)
-		awsCredsKeychain := secrets.NewKeychain(cognitoConfig.CredsAwsKey, currentUser.Username)
+		awsCredsKeychain := secrets.NewKeychain(cognitoConfig.CredsAwsKey, *currentUser)
 		credentialsCache = awscreds.NewKeychainCache(awsCredsKeychain)
 	} else {
 		tokenCache = oauth.NewFileCache(v.CacheDir)

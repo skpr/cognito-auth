@@ -9,15 +9,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
+	"github.com/google/wire"
 	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/googleauth"
 	"github.com/skpr/cognito-auth/pkg/oauth"
+	"github.com/skpr/cognito-auth/pkg/secrets"
+	"os/user"
 )
 
 // Injectors from wire.go:
 
-func InitializeLoginHandler(cacheDir string, cognitoConfig *config.Config, sess *session.Session, awsConfig []*aws.Config) *googleauth.LoginHandler {
+func InitializeLoginHandlerFileCache(cacheDir string, cognitoConfig *config.Config, sess *session.Session, awsConfig []*aws.Config) *googleauth.LoginHandler {
 	fileCache := oauth.NewFileCache(cacheDir)
 	awscredsFileCache := awscreds.NewFileCache(cacheDir)
 	tokensRefresher := googleauth.NewTokensRefresher(cognitoConfig, fileCache)
@@ -27,3 +30,19 @@ func InitializeLoginHandler(cacheDir string, cognitoConfig *config.Config, sess 
 	loginHandler := googleauth.NewLoginHandler(cognitoConfig, fileCache, credentialsResolver)
 	return loginHandler
 }
+
+func InitializeLoginHandlerKeychain(cognitoConfig *config.Config, sess *session.Session, awsConfig []*aws.Config, service string, user2 user.User) *googleauth.LoginHandler {
+	keychain := secrets.NewKeychain(service, user2)
+	keychainCache := oauth.NewKeychainCache(keychain)
+	awscredsKeychainCache := awscreds.NewKeychainCache(keychain)
+	tokensRefresher := googleauth.NewTokensRefresher(cognitoConfig, keychainCache)
+	tokensResolver := oauth.NewTokensResolver(keychainCache, tokensRefresher)
+	cognitoIdentity := cognitoidentity.New(sess, awsConfig...)
+	credentialsResolver := awscreds.NewCredentialsResolver(cognitoConfig, awscredsKeychainCache, tokensResolver, cognitoIdentity)
+	loginHandler := googleauth.NewLoginHandler(cognitoConfig, keychainCache, credentialsResolver)
+	return loginHandler
+}
+
+// wire.go:
+
+var providerSet = wire.NewSet(wire.Bind(new(oauth.TokensRefresher), new(*googleauth.TokensRefresher)), googleauth.NewTokensRefresher, oauth.NewTokensResolver, awscreds.NewCredentialsResolver, cognitoidentity.New, googleauth.NewLoginHandler)

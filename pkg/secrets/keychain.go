@@ -2,6 +2,7 @@ package secrets
 
 import (
 	"github.com/zalando/go-keyring"
+	"os/user"
 )
 
 // Keychain defines a keychain.
@@ -11,10 +12,10 @@ type Keychain struct {
 }
 
 // NewKeychain creates a new keychain.
-func NewKeychain(service string, account string) *Keychain {
+func NewKeychain(service string, user user.User) *Keychain {
 	return &Keychain{
 		service: service,
-		account: account,
+		account: user.Username,
 	}
 }
 
