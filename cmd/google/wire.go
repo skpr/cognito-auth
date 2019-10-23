@@ -2,10 +2,9 @@
 
 package google
 
-//go:generate wire gen
-
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/google/wire"
@@ -16,17 +15,21 @@ import (
 	"github.com/skpr/cognito-auth/pkg/oauth"
 )
 
-// InitializeLoginHandler initialises the login handler.
-func InitializeLoginHandler(awsConfig *aws.Config, cognitoConfig *config.Config, cacheDir string) (googleauth.LoginHandler, error) {
-	wire.Build(
-		googleauth.NewLoginHandler,
-		wire.InterfaceValue(new(oauth.TokenCache), oauth.NewFileCache),
-		awscreds.NewCredentialsResolver,
-		wire.InterfaceValue(new(awscreds.CredentialsCache), awscreds.NewFileCache),
-		session.NewSession,
-		cognitoidentity.New,
-		googleauth.NewTokensRefresher,
+//go:generate wire
 
+func InitializeLoginHandler(cacheDir string, cognitoConfig *config.Config, sess *session.Session, awsConfig []*aws.Config) *googleauth.LoginHandler {
+	wire.Build(
+		wire.Bind(new(oauth.TokenCache), new(*oauth.FileCache)),
+		oauth.NewFileCache,
+		wire.Bind(new(oauth.TokensRefresher), new(*googleauth.TokensRefresher)),
+		googleauth.NewTokensRefresher,
+		oauth.NewTokensResolver,
+		wire.Bind(new(awscreds.CredentialsCache), new(*awscreds.FileCache)),
+		awscreds.NewFileCache,
+		awscreds.NewCredentialsResolver,
+		wire.Bind(new(client.ConfigProvider), new(*session.Session)),
+		cognitoidentity.New,
+		googleauth.NewLoginHandler,
 	)
-	return googleauth.LoginHandler{}, nil
+	return &googleauth.LoginHandler{}
 }
