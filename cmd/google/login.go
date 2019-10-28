@@ -2,21 +2,19 @@ package google
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cognitoidentity"
-	"github.com/pkg/errors"
-	"github.com/skpr/cognito-auth/pkg/awscreds"
-	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/googleauth"
-	"github.com/skpr/cognito-auth/pkg/oauth"
-	"github.com/skpr/cognito-auth/pkg/secrets"
-	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"os/user"
 	"syscall"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/skpr/cognito-auth/pkg/config"
 )
 
 type cmdLogin struct {
@@ -38,29 +36,17 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		return err
 	}
 
-	var tokenCache oauth.TokenCache
-	var credentialsCache awscreds.CredentialsCache
-
+	var loginHandler *googleauth.LoginHandler
 	if cognitoConfig.CredsStore == "native" {
 		currentUser, err := user.Current()
 		if err != nil {
 			return err
 		}
-		oauth2Keychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, currentUser.Username)
-		tokenCache = oauth.NewKeychainCache(oauth2Keychain)
-		awsCredsKeychain := secrets.NewKeychain(cognitoConfig.CredsAwsKey, currentUser.Username)
-		credentialsCache = awscreds.NewKeychainCache(awsCredsKeychain)
+		loginHandler = googleauth.CreateLoginHandlerKeychainCache(&cognitoConfig, sess, currentUser.Username)
 	} else {
-		tokenCache = oauth.NewFileCache(v.CacheDir)
-		credentialsCache = awscreds.NewFileCache(v.CacheDir)
+		loginHandler = googleauth.CreateLoginHandlerFileCache(&cognitoConfig, sess, v.CacheDir)
 	}
 
-	cognitoIdentity := cognitoidentity.New(sess)
-	tokensRefresher := googleauth.NewTokensRefresher(&cognitoConfig, tokenCache)
-	tokensResolver := oauth.NewTokensResolver(tokenCache, tokensRefresher)
-	credentialsResolver := awscreds.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
-
-	loginHandler := googleauth.NewLoginHandler(&cognitoConfig, tokenCache, credentialsResolver)
 	authURL := loginHandler.GetAuthCodeURL()
 
 	fmt.Println("Please login with the following link:")
