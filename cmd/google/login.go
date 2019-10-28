@@ -2,7 +2,6 @@ package google
 
 import (
 	"fmt"
-	"github.com/skpr/cognito-auth/pkg/googleauth"
 	"os"
 	"os/user"
 	"syscall"
@@ -15,6 +14,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/skpr/cognito-auth/pkg/config"
+	"github.com/skpr/cognito-auth/pkg/googleauth"
 )
 
 type cmdLogin struct {
