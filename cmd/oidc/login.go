@@ -1,4 +1,4 @@
-package google
+package oidc
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/skpr/cognito-auth/pkg/config"
-	"github.com/skpr/cognito-auth/pkg/googleauth"
+	"github.com/skpr/cognito-auth/pkg/oidc"
 )
 
 type cmdLogin struct {
@@ -36,15 +36,15 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		return err
 	}
 
-	var loginHandler *googleauth.LoginHandler
+	var loginHandler *oidc.LoginHandler
 	if cognitoConfig.CredsStore == "native" {
 		currentUser, err := user.Current()
 		if err != nil {
 			return err
 		}
-		loginHandler = googleauth.CreateLoginHandlerKeychainCache(&cognitoConfig, sess, currentUser.Username)
+		loginHandler = oidc.CreateLoginHandlerKeychainCache(&cognitoConfig, sess, currentUser.Username)
 	} else {
-		loginHandler = googleauth.CreateLoginHandlerFileCache(&cognitoConfig, sess, v.CacheDir)
+		loginHandler = oidc.CreateLoginHandlerFileCache(&cognitoConfig, sess, v.CacheDir)
 	}
 
 	authURL, state := loginHandler.GetAuthCodeURL()
@@ -55,7 +55,6 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 	if err != nil {
 		return err
 	}
-	time.Sleep(1 * time.Second)
 	fmt.Println("Authentication URL:", authURL)
 
 	creds, err := loginHandler.Handle(state)
@@ -73,10 +72,10 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 func Login(c *kingpin.CmdClause) {
 	v := new(cmdLogin)
 
-	command := c.Command("login", "Logs in a user using their google account.").Action(v.run)
+	command := c.Command("login", "Logs in a user using their OpenID Connect account.").Action(v.run)
 	homeDir, _ := os.UserHomeDir()
 	cacheDir, _ := os.UserCacheDir()
-	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/google.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
+	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/oidc.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
 	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").Envar("COGNITO_AUTH_CACHE_DIR").StringVar(&v.CacheDir)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").Envar("COGNITO_AUTH_REGION").StringVar(&v.Region)
 }

@@ -1,4 +1,4 @@
-package googleauth
+package oidc
 
 import (
 	"github.com/aws/aws-sdk-go/aws/client"
