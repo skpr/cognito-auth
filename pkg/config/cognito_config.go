@@ -13,6 +13,8 @@ type Config struct {
 	ClientSecret       string `yaml:"client_secret"`
 	IdentityPoolID     string `yaml:"identity_pool_id"`
 	IdentityProviderID string `yaml:"identity_provider_id"`
+	AuthURL            string `yaml:"auth_url"`
+	TokenURL           string `yaml:"token_url"`
 	ConsoleDestination string `yaml:"console_destination"`
 	ConsoleIssuer      string `yaml:"console_issuer"`
 	CredsStore         string `yaml:"creds_store,omitempty"`

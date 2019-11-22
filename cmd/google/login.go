@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"os"
 	"os/user"
-	"syscall"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/skratchdot/open-golang/open"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/skpr/cognito-auth/pkg/config"
@@ -47,18 +47,18 @@ func (v *cmdLogin) run(c *kingpin.ParseContext) error {
 		loginHandler = googleauth.CreateLoginHandlerFileCache(&cognitoConfig, sess, v.CacheDir)
 	}
 
-	authURL := loginHandler.GetAuthCodeURL()
+	authURL, state := loginHandler.GetAuthCodeURL()
 
-	fmt.Println("Please login with the following link:")
-	fmt.Println(authURL)
-	fmt.Println("Then paste your authentication code:")
-	bytecode, err := terminal.ReadPassword(int(syscall.Stdin))
+	fmt.Println("You will now be taken to your browser to login.")
+	time.Sleep(1 * time.Second)
+	err = open.Run(authURL)
 	if err != nil {
-		fmt.Printf("Failed to read code: %v", err)
+		return err
 	}
-	code := string(bytecode)
+	time.Sleep(1 * time.Second)
+	fmt.Println("Authentication URL:", authURL)
 
-	creds, err := loginHandler.Login(code)
+	creds, err := loginHandler.Handle(state)
 
 	if err != nil {
 		return errors.Wrap(err, "Failed to login")

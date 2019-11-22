@@ -2,37 +2,44 @@ package googleauth
 
 import (
 	"context"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/oauth"
+	"github.com/skpr/cognito-auth/pkg/rand"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	"net/http"
 )
 
 const (
 	scopes      = "openid email"
-	redirectURL = "urn:ietf:wg:oauth:2.0:oob"
+	redirectURL = "http://localhost:8080"
 )
 
 // LoginHandler struct
 type LoginHandler struct {
 	cognitoConfig       config.Config
-	googleConfig        oauth2.Config
+	oauth2Config        oauth2.Config
 	tokensCache         oauth.TokenCache
 	credentialsResolver awscreds.CredentialsResolver
 }
 
 // NewLoginHandler creates a new login handler
 func NewLoginHandler(config *config.Config, tokensCache oauth.TokenCache, credentialsResolver *awscreds.CredentialsResolver) *LoginHandler {
+	endpoint := oauth2.Endpoint{
+		AuthStyle:oauth2.AuthStyleInParams,
+		AuthURL: config.AuthURL,
+		TokenURL: config.TokenURL,
+	}
 	return &LoginHandler{
 		cognitoConfig: *config,
-		googleConfig: oauth2.Config{
+		oauth2Config: oauth2.Config{
 			RedirectURL:  redirectURL,
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
 			Scopes:       []string{scopes},
-			Endpoint:     google.Endpoint,
+			Endpoint:     endpoint,
 		},
 		tokensCache:         tokensCache,
 		credentialsResolver: *credentialsResolver,
@@ -40,13 +47,48 @@ func NewLoginHandler(config *config.Config, tokensCache oauth.TokenCache, creden
 }
 
 // GetAuthCodeURL gets the authorisation code URL.
-func (l *LoginHandler) GetAuthCodeURL() string {
-	return l.googleConfig.AuthCodeURL("", oauth2.AccessTypeOffline)
+func (l *LoginHandler) GetAuthCodeURL() (string, string) {
+	state := rand.String(8)
+	return l.oauth2Config.AuthCodeURL(state, oauth2.AccessTypeOffline), state
+}
+
+func (l *LoginHandler) Handle(state string) (awscreds.Credentials, error) {
+	code, respState, err := l.getCode(":8080")
+	if err != nil {
+		return awscreds.Credentials{}, err
+	}
+	if state != respState {
+		return awscreds.Credentials{}, errors.New("invalid state")
+	}
+	return l.Login(code)
+}
+
+// getCode starts an HTTP server to parse the OAuth2 callback and extract the code.
+func (l *LoginHandler) getCode(addr string) (string, string, error) {
+	var code, state string
+
+	ctx, cancel := context.WithCancel(context.Background())
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		code = r.URL.Query().Get("code")
+		state = r.URL.Query().Get("state")
+		cancel()
+	})
+	server := &http.Server{Addr: addr, Handler: handler}
+	go func() {
+		<-ctx.Done()
+		fmt.Println("Shutting down the HTTP server...")
+		_ = server.Shutdown(ctx)
+	}()
+	err := server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed{
+		return "", "", err
+	}
+	return code, state, nil
 }
 
 // Login logs in a user with the authorization code.
 func (l *LoginHandler) Login(code string) (awscreds.Credentials, error) {
-	token, err := l.googleConfig.Exchange(context.Background(), code)
+	token, err := l.oauth2Config.Exchange(context.Background(), code)
 	if err != nil {
 		return awscreds.Credentials{}, errors.Wrap(err, "Failed to login with code")
 	}

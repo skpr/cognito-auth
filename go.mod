@@ -9,12 +9,13 @@ require (
 	github.com/aws/aws-sdk-go v1.23.22
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
-	github.com/fatih/color v1.7.0 // indirect
+	github.com/fatih/color v1.7.0
 	github.com/gosuri/uitable v0.0.3
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/stretchr/testify v1.4.0
 	github.com/zalando/go-keyring v0.0.0-20190913082157-62750a1ff80d
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
