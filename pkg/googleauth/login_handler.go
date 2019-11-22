@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	scopes      = "openid email"
+	scopes      = "openid email profile"
 	redirectURL = "http://localhost:8080"
 )
 
@@ -52,6 +52,7 @@ func (l *LoginHandler) GetAuthCodeURL() (string, string) {
 	return l.oauth2Config.AuthCodeURL(state, oauth2.AccessTypeOffline), state
 }
 
+// Handle handles the OAuth2 code flow.
 func (l *LoginHandler) Handle(state string) (awscreds.Credentials, error) {
 	code, respState, err := l.getCode(":8080")
 	if err != nil {
