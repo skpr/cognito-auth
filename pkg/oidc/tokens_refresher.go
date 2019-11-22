@@ -6,7 +6,6 @@ import (
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/oauth"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"log"
 )
 
@@ -14,20 +13,26 @@ import (
 type TokensRefresher struct {
 	cognitoConfig config.Config
 	tokensCache   oauth.TokenCache
-	googleConfig  oauth2.Config
+	oidcConfig    oauth2.Config
 }
 
 // NewTokensRefresher creates a new tokens refresher.
 func NewTokensRefresher(cognitoConfig *config.Config, tokensCache oauth.TokenCache) *TokensRefresher {
 
+	endpoint := oauth2.Endpoint{
+		AuthURL:   cognitoConfig.AuthURL,
+		TokenURL:  cognitoConfig.TokenURL,
+		AuthStyle: oauth2.AuthStyleInParams,
+	}
+
 	return &TokensRefresher{
 		cognitoConfig: *cognitoConfig,
-		googleConfig: oauth2.Config{
+		oidcConfig: oauth2.Config{
 			RedirectURL:  redirectURL,
 			ClientID:     cognitoConfig.ClientID,
 			ClientSecret: cognitoConfig.ClientSecret,
 			Scopes:       []string{scopes},
-			Endpoint:     google.Endpoint,
+			Endpoint:     endpoint,
 		},
 		tokensCache: tokensCache,
 	}
@@ -38,7 +43,7 @@ func (r *TokensRefresher) RefreshOAuthTokens(refreshToken string) (oauth.Tokens,
 	token := oauth2.Token{
 		RefreshToken: refreshToken,
 	}
-	tokenSource := r.googleConfig.TokenSource(context.Background(), &token)
+	tokenSource := r.oidcConfig.TokenSource(context.Background(), &token)
 	newToken, err := tokenSource.Token()
 	if err != nil {
 		log.Fatalln(err)
