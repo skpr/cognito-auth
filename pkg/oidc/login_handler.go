@@ -3,14 +3,16 @@ package oidc
 import (
 	"context"
 	"fmt"
+
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
+	"html/template"
+	"net/http"
+
 	"github.com/skpr/cognito-auth/pkg/awscreds"
 	"github.com/skpr/cognito-auth/pkg/config"
 	"github.com/skpr/cognito-auth/pkg/oauth"
 	"github.com/skpr/cognito-auth/pkg/rand"
-	"golang.org/x/oauth2"
-	"html/template"
-	"net/http"
 )
 
 const (
