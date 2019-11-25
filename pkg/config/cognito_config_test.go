@@ -17,4 +17,5 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, "native", c.CredsStore, "creds_store was set")
 	assert.Equal(t, "Cognito OAuth Tokens", c.CredsOAuthKey, "creds_oauth_key_url was set")
 	assert.Equal(t, "Cognito AWS Credentials", c.CredsAwsKey, "creds_aws_key_url was set")
+	assert.Equal(t, 8080, c.ListenPort, "listen_port was set")
 }

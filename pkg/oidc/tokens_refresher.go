@@ -7,6 +7,7 @@ import (
 	"github.com/skpr/cognito-auth/pkg/oauth"
 	"golang.org/x/oauth2"
 	"log"
+	"strconv"
 )
 
 // TokensRefresher struct
@@ -25,6 +26,7 @@ func NewTokensRefresher(cognitoConfig *config.Config, tokensCache oauth.TokenCac
 		AuthStyle: oauth2.AuthStyleInParams,
 	}
 
+	redirectURL := "http://localhost:" + strconv.Itoa(cognitoConfig.ListenPort)
 	return &TokensRefresher{
 		cognitoConfig: *cognitoConfig,
 		oidcConfig: oauth2.Config{

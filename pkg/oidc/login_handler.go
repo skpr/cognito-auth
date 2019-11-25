@@ -3,6 +3,7 @@ package oidc
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
@@ -16,9 +17,8 @@ import (
 )
 
 const (
-	scopes      = "openid email profile"
-	redirectURL = "http://localhost:8080"
-	successTpl  = `<!DOCTYPE html>
+	scopes     = "openid email profile"
+	successTpl = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -69,10 +69,11 @@ type LoginHandler struct {
 // NewLoginHandler creates a new login handler
 func NewLoginHandler(config *config.Config, tokensCache oauth.TokenCache, credentialsResolver *awscreds.CredentialsResolver) *LoginHandler {
 	endpoint := oauth2.Endpoint{
-		AuthStyle:oauth2.AuthStyleInParams,
-		AuthURL: config.AuthURL,
-		TokenURL: config.TokenURL,
+		AuthStyle: oauth2.AuthStyleInParams,
+		AuthURL:   config.AuthURL,
+		TokenURL:  config.TokenURL,
 	}
+	redirectURL := "http://localhost:" + strconv.Itoa(config.ListenPort)
 	return &LoginHandler{
 		cognitoConfig: *config,
 		oauth2Config: oauth2.Config{
@@ -95,7 +96,7 @@ func (l *LoginHandler) GetAuthCodeURL() (string, string) {
 
 // Handle handles the OAuth2 code flow.
 func (l *LoginHandler) Handle(state string) (awscreds.Credentials, error) {
-	code, respState, err := l.getCode(":8080")
+	code, respState, err := l.getCode()
 	if err != nil {
 		return awscreds.Credentials{}, err
 	}
@@ -106,7 +107,7 @@ func (l *LoginHandler) Handle(state string) (awscreds.Credentials, error) {
 }
 
 // getCode starts an HTTP server to parse the OAuth2 callback and extract the code.
-func (l *LoginHandler) getCode(addr string) (string, string, error) {
+func (l *LoginHandler) getCode() (string, string, error) {
 	var code, state string
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -120,14 +121,14 @@ func (l *LoginHandler) getCode(addr string) (string, string, error) {
 
 		cancel()
 	})
-	server := &http.Server{Addr: addr, Handler: handler}
+	server := &http.Server{Addr: ":" + strconv.Itoa(l.cognitoConfig.ListenPort), Handler: handler}
 	go func() {
 		<-ctx.Done()
 		fmt.Println("Shutting down the HTTP server...")
 		_ = server.Shutdown(ctx)
 	}()
 	err := server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed{
+	if err != nil && err != http.ErrServerClosed {
 		return "", "", err
 	}
 	return code, state, nil
