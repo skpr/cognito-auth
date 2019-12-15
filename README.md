@@ -14,14 +14,14 @@ These are stored locally for re-use, and automatically refreshed if stale.
 Two modes of authentication are supported:
 
 - Cognito User Pool Authentication
-- Google Authentication
+- OpenID Connect Authentication
 
 ```
   help [<command>...]
     Show help.
 
-  google login [<flags>]
-    Logs in a user using their google account.
+  oidc login [<flags>]
+    Logs in a user using their oidc account.
 
   userpool login --username=USERNAME [<flags>]
     Logs in a user to a Cognito Userpool.
@@ -63,23 +63,24 @@ console_issuer: <YOUR CONSOLE ISSUER URL>
 By default, it will store OAuth2 tokens and AWS STS Credentials in yaml *files* in `$HOME/Library/Caches/cognito-auth/` (MacOS)
 or `$HOME/.cache/cognito-auth/` (Linux).
 
-### Google Authentication
+### OpenID Connect Authentication
 
-Cognito Auth looks for a configuration file in `$HOME/.config/cognito-auth/google.yml`.
+Cognito Auth looks for a configuration file in `$HOME/.config/cognito-auth/oidc.yml`.
 
 ```yaml
-identity_provider_id: accounts.google.com
+identity_provider_id: <YOUR IDENTITY PROVIDER ID>
 identity_pool_id: <YOUR IDENTITY POOL ID>
 client_id: <YOUR CLIENT ID>
 client_secret: <YOUR CLIENT SECRET>
+auth_url: <YOUR OIDC AUTH URL>
+token_url: <YOUR OIDC TOKEN URL>
 console_destination: https://console.aws.amazon.com/cloudwatch
 console_issuer: <YOUR CONSOLE ISSUER URL>
 ```
 
-The Google Authentication uses the code flow. You will be presented with a page displaying an
-authorisation code. You need to copy and past that into the console when prompted.
+OpenID Connect Authentication uses the code flow.
 
-*Note:* `client_secret` is required for Google Authentication.
+*Note:*   `client_secret` may be required dependending on your Identity Provider (e.g. Google).
 
 ### Secure Token Storage
 

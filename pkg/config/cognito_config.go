@@ -7,22 +7,26 @@ import (
 	"os"
 )
 
+const defaultPort = 8080
+
 // Config type
 type Config struct {
 	ClientID           string `yaml:"client_id"`
 	ClientSecret       string `yaml:"client_secret"`
 	IdentityPoolID     string `yaml:"identity_pool_id"`
 	IdentityProviderID string `yaml:"identity_provider_id"`
+	AuthURL            string `yaml:"auth_url"`
+	TokenURL           string `yaml:"token_url"`
 	ConsoleDestination string `yaml:"console_destination"`
 	ConsoleIssuer      string `yaml:"console_issuer"`
 	CredsStore         string `yaml:"creds_store,omitempty"`
 	CredsOAuthKey      string `yaml:"creds_oauth_key,omitempty"`
 	CredsAwsKey        string `yaml:"creds_aws_key,omitempty"`
+	ListenPort         int    `yaml:"listen_port,omitempty"`
 }
 
 // Load load awscreds credentials from a file.
 func Load(file string) (Config, error) {
-	var config Config
 
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		return Config{}, errors.Wrap(err, "Config file does not exist")
@@ -33,6 +37,9 @@ func Load(file string) (Config, error) {
 		return Config{}, errors.Wrap(err, "Failed to read config file")
 	}
 
+	config := Config{
+		ListenPort: defaultPort,
+	}
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		return Config{}, errors.Wrap(err, "Failed to unmarshal credentials")
