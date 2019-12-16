@@ -20,10 +20,11 @@ func CreateLoginHandlerFileCache(cognitoConfig *config.Config, sess *session.Ses
 
 // CreateLoginHandlerKeychainCache creates a login handler with a keychain cache.
 func CreateLoginHandlerKeychainCache(cognitoConfig *config.Config, sess *session.Session, username string) *LoginHandler {
-	keychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, username)
-	tokensKeychainCache := oauth.NewKeychainCache(keychain)
-	awscredsKeychainCache := awscreds.NewKeychainCache(keychain)
-	return CreateLoginHandler(cognitoConfig, sess, tokensKeychainCache, awscredsKeychainCache)
+	oauthKeychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, username)
+	oauthKeychainCache := oauth.NewKeychainCache(oauthKeychain)
+	awscredsKeychain := secrets.NewKeychain(cognitoConfig.CredsAwsKey, username)
+	awscredsKeychainCache := awscreds.NewKeychainCache(awscredsKeychain)
+	return CreateLoginHandler(cognitoConfig, sess, oauthKeychainCache, awscredsKeychainCache)
 }
 
 // CreateLoginHandler creates a login handler.
