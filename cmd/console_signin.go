@@ -13,6 +13,7 @@ import (
 	"github.com/skpr/cognito-auth/pkg/oauth"
 	"github.com/skpr/cognito-auth/pkg/secrets"
 	"github.com/skpr/cognito-auth/pkg/userpool"
+	"github.com/skratchdot/open-golang/open"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"os/user"
@@ -37,20 +38,20 @@ func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
 	}
 
 	var tokenCache oauth.TokenCache
-	var credentialsCache awscreds.CredentialsCache
+	var awsCredsCache awscreds.CredentialsCache
 
 	if cognitoConfig.CredsStore == "native" {
 		currentUser, err := user.Current()
 		if err != nil {
 			return err
 		}
-		oauth2Keychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, currentUser.Username)
-		tokenCache = oauth.NewKeychainCache(oauth2Keychain)
+		tokenKeychain := secrets.NewKeychain(cognitoConfig.CredsOAuthKey, currentUser.Username)
+		tokenCache = oauth.NewKeychainCache(tokenKeychain)
 		awsCredsKeychain := secrets.NewKeychain(cognitoConfig.CredsAwsKey, currentUser.Username)
-		credentialsCache = awscreds.NewKeychainCache(awsCredsKeychain)
+		awsCredsCache = awscreds.NewKeychainCache(awsCredsKeychain)
 	} else {
 		tokenCache = oauth.NewFileCache(v.CacheDir)
-		credentialsCache = awscreds.NewFileCache(v.CacheDir)
+		awsCredsCache = awscreds.NewFileCache(v.CacheDir)
 	}
 
 	cognitoIdentityProvider := cognitoidentityprovider.New(sess)
@@ -58,12 +59,17 @@ func (v *cmdConsoleSignIn) run(c *kingpin.ParseContext) error {
 	tokensRefresher := userpool.NewTokensRefresher(&cognitoConfig, tokenCache, cognitoIdentityProvider)
 	tokensResolver := oauth.NewTokensResolver(tokenCache, tokensRefresher)
 
-	credentialsResolver := awscreds.NewCredentialsResolver(&cognitoConfig, credentialsCache, tokensResolver, cognitoIdentity)
+	credentialsResolver := awscreds.NewCredentialsResolver(&cognitoConfig, awsCredsCache, tokensResolver, cognitoIdentity)
 	signin := consolesignin.New(&cognitoConfig, credentialsResolver)
 
 	link, err := signin.GetSignInLink()
 	if err != nil {
 		fmt.Println("Login required")
+		return err
+	}
+	fmt.Println("You will now be taken to your browser to login to the AWS console.")
+	err = open.Run(link)
+	if err != nil {
 		return err
 	}
 	fmt.Println(link)
@@ -77,7 +83,7 @@ func ConsoleSignIn(app *kingpin.Application) {
 	command := app.Command("console-signin", "Generates a console sign-in link.").Action(v.run)
 	homeDir, _ := os.UserHomeDir()
 	cacheDir, _ := os.UserCacheDir()
-	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/userpool.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
+	command.Flag("config", "The config file to use.").Default(homeDir + "/.config/cognito-auth/oidc.yml").Envar("COGNITO_AUTH_CONFIG").StringVar(&v.ConfigFile)
 	command.Flag("cache-dir", "The cache directory to use.").Default(cacheDir + "/cognito-auth").Envar("COGNITO_AUTH_CACHE_DIR").StringVar(&v.CacheDir)
 	command.Flag("region", "The AWS region").Default("ap-southeast-2").Envar("COGNITO_AUTH_REGION").StringVar(&v.Region)
 }
